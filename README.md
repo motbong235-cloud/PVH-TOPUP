@@ -3,7 +3,7 @@
 ## Files
 | File | Purpose |
 |---|---|
-| `server_v16.py` | Flask backend — payment (CamRapidPay/KHQR) + auto top-up (Khmer TopUp) |
+| `server_v16.py` | Flask backend — payment (ABA PayWay via KHMER SYSTEM) + auto top-up (Khmer TopUp) |
 | `index_v6.html` | Storefront frontend, served at `/` |
 | `db_default.json` | Seed data — one demo Free Fire product so the site isn't empty on first boot |
 | `requirements.txt` | Python dependencies |
@@ -19,7 +19,7 @@
 ## Deploy on Render
 1. Push these files to a GitHub repo.
 2. Render dashboard → **New → Blueprint** → point at the repo (uses `render.yaml`).
-3. Fill in the secret env vars Render will prompt for: `KHMERTOPUP_API_KEY`, `CAMRAPID_API_KEY`, `TELEGRAM_BOT_TOKEN`, `ADMIN_CHAT_ID`. `ADMIN_PANEL_TOKEN` and `FRONTEND_PAYLOAD_KEY` are auto-generated.
+3. Fill in the secret env vars Render will prompt for: `KHMERTOPUP_API_KEY`, `ABA_API_KEY`, `ABA_MERCHANT_ID`, `TELEGRAM_BOT_TOKEN`, `ADMIN_CHAT_ID`. `ADMIN_PANEL_TOKEN` and `FRONTEND_PAYLOAD_KEY` are auto-generated.
 4. Deploy. Your site is live at the Render URL; admin API at `/api/admin-*` with header `x-admin-token: <ADMIN_PANEL_TOKEN>`.
 
 No `render.yaml`? Create a plain **Web Service** instead, set the build command to `pip install -r requirements.txt` and the start command to the line in `Procfile`, then add the same env vars by hand.

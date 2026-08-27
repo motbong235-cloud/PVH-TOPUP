@@ -10,9 +10,9 @@ Auto top-up is now wired to the Khmer TopUp reseller API
 (https://khmer-topup.com/api/v1) instead of FazerCards:
 
   - Auto CHECK ID   -> GET  /check          (used by /api/check-user)
-  - Auto PAYMENT    -> CamRapidPay KHQR      (unchanged: create-payment / check-payment)
+  - Auto PAYMENT    -> ABA PayWay (KHMER SYSTEM) (create-payment / check-payment)
   - Auto TOP-UP     -> POST /orders          (placed automatically the moment
-                                                CamRapidPay confirms payment)
+                                                ABA PayWay confirms payment)
   - Delivery status -> GET  /orders/{code}   (polled by /api/check-topup-status)
   - Wallet balance  -> GET  /me              (used by /api/admin-khmertopup-balance)
   - Catalogue       -> GET  /games           (used by /api/admin-khmertopup-games)
@@ -134,17 +134,126 @@ def encrypt_payload(obj) -> str:
 # Config (edit these, or set as real environment variables before running)
 # ---------------------------------------------------------------------------
 
-CAMRAPID_API_KEY = os.environ.get("CAMRAPID_API_KEY", "")
 TELEGRAM_BOT_TOKEN = os.environ.get("TELEGRAM_BOT_TOKEN", "")
 ADMIN_CHAT_ID = os.environ.get("ADMIN_CHAT_ID", "")
 ADMIN_PANEL_TOKEN = os.environ.get("ADMIN_PANEL_TOKEN", "change-this-to-a-long-random-string")
 
-CAMRAPID_CREATE_URL = "https://pay.camrapidpay.com/api/v1/khqr/create-payments"
-CAMRAPID_CHECK_URL = "https://pay.camrapidpay.com/check-transaction-api"
+# ABA PayWay (via KHMER SYSTEM — khmer-system.com) — same integration as
+# premium_shop_bot_v16.py's aba_generate_qr()/aba_check_payment().
+# Profile Key + Merchant ID from khmer-system.com/operator/profile.
+ABA_API_KEY = os.environ.get("ABA_API_KEY", "")
+ABA_MERCHANT_ID = os.environ.get("ABA_MERCHANT_ID", "")
+ABA_BASE_URL = os.environ.get("ABA_BASE_URL", "https://khmer-system.com")
+ABA_CREATE_URL = os.environ.get("ABA_CREATE_URL", f"{ABA_BASE_URL}/aba-api/generate-qr")
+ABA_CHECK_URL = os.environ.get("ABA_CHECK_URL", f"{ABA_BASE_URL}/aba-api/check-payment")
 
 # Khmer TopUp reseller API (auto ID-check + auto top-up)
 KHMERTOPUP_API_KEY = os.environ.get("KHMERTOPUP_API_KEY", "")
 KHMERTOPUP_BASE_URL = os.environ.get("KHMERTOPUP_BASE_URL", "https://khmer-topup.com/api/v1")
+
+# ---------------------------------------------------------------------------
+# ABA PayWay integration (via KHMER SYSTEM — khmer-system.com)
+# Ported from premium_shop_bot_v16.py's aba_generate_qr()/aba_check_payment().
+# ---------------------------------------------------------------------------
+
+_http = requests.Session()
+_http.mount("https://", requests.adapters.HTTPAdapter(
+    max_retries=requests.adapters.Retry(total=2, backoff_factor=0.5)
+))
+# khmer-system.com has a firewall/security plugin (Wordfence, Cloudflare, etc.)
+# that blocks requests without a browser-like User-Agent — the default
+# "python-requests/x.x" gets a 403 HTML page instead of JSON.
+_http.headers.update({
+    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
+                  "(KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
+})
+
+_last_aba_error = ""
+
+
+def aba_generate_qr(amount, username, _attempt=1):
+    """POST https://khmer-system.com/aba-api/generate-qr — creates an ABA KHQR
+    payment. Returns the full response dict (payment_id, qr_image, card_image,
+    pay_url, expires_at...) on success, or None on failure (see _last_aba_error)."""
+    global _last_aba_error
+    if not ABA_API_KEY or not ABA_MERCHANT_ID:
+        _last_aba_error = "ABA_API_KEY / ABA_MERCHANT_ID is not set in the server environment"
+        print(f"[aba_generate_qr] {_last_aba_error}", flush=True)
+        return None
+    try:
+        r = _http.post(
+            ABA_CREATE_URL,
+            json={
+                "api_key": ABA_API_KEY,
+                "merchant_id": ABA_MERCHANT_ID,
+                "username": username,
+                "amount": round(float(amount), 2),
+            },
+            headers={"Content-Type": "application/json", "Accept": "application/json"},
+            timeout=20,
+        )
+        try:
+            data = r.json()
+        except ValueError:
+            body = r.text.strip()
+            if body.lower().startswith(("<!doctype", "<html")):
+                _last_aba_error = (
+                    f"HTTP {r.status_code} — server returned an HTML page (likely a firewall/WAF "
+                    f"block, or a wrong endpoint URL) instead of JSON"
+                )
+            else:
+                _last_aba_error = f"HTTP {r.status_code} (non-JSON): {body[:300]}"
+            print(f"[aba_generate_qr] {_last_aba_error}", flush=True)
+            if r.status_code >= 500 and _attempt < 2:
+                time.sleep(1.5)
+                return aba_generate_qr(amount, username, _attempt=2)
+            return None
+        if data.get("ok"):
+            return data
+        _last_aba_error = f"HTTP {r.status_code} [{data.get('code', '?')}]: {data.get('message') or data}"
+        print(f"[aba_generate_qr] failed: {_last_aba_error}", flush=True)
+        if r.status_code >= 500 and _attempt < 2:
+            time.sleep(1.5)
+            return aba_generate_qr(amount, username, _attempt=2)
+    except (requests.exceptions.Timeout, requests.exceptions.ConnectionError) as e:
+        _last_aba_error = f"{type(e).__name__}: {e}"
+        print(f"[aba_generate_qr] transient error: {_last_aba_error}", flush=True)
+        if _attempt < 2:
+            time.sleep(1.5)
+            return aba_generate_qr(amount, username, _attempt=2)
+    except Exception as e:  # noqa: BLE001
+        _last_aba_error = f"{type(e).__name__}: {e}"
+        print(f"[aba_generate_qr] error: {_last_aba_error}", flush=True)
+    return None
+
+
+def aba_check_payment(payment_id):
+    """Checks a payment's status by payment_id — returns True if status is PAID."""
+    try:
+        r = _http.post(
+            ABA_CHECK_URL,
+            json={"api_key": ABA_API_KEY, "merchant_id": ABA_MERCHANT_ID, "payment_id": payment_id},
+            headers={"Content-Type": "application/json", "Accept": "application/json"},
+            timeout=10,
+        )
+        data = r.json()
+        return bool(data.get("ok")) and str(data.get("status", "")).upper() == "PAID"
+    except Exception as e:  # noqa: BLE001
+        print(f"[aba_check_payment] error: {e}")
+    return False
+
+
+def _aba_image_src(card_image_or_qr_image):
+    """khmer-system.com returns the card/QR image as either an http(s) URL, or a
+    base64 string (sometimes with a 'data:image/...;base64,' prefix, sometimes
+    without). Normalize to something an <img src="..."> can use directly."""
+    if not card_image_or_qr_image:
+        return None
+    s = str(card_image_or_qr_image).strip()
+    if s.lower().startswith(("http://", "https://", "data:")):
+        return s
+    return f"data:image/png;base64,{s}"
+
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 DATA_DIR = os.environ.get("DATA_DIR", BASE_DIR)  # point this at a Render persistent disk mount in production
@@ -168,7 +277,7 @@ _db_lock = threading.Lock()
 # responses), which already absorbs volumetric/network-layer DDoS traffic.
 # This layer protects against application-layer abuse: someone hammering
 # endpoints that cost real money per call (Khmer TopUp check-user/place-order,
-# CamRapidPay create/check-payment) or that are cheap to spam but expensive
+# ABA PayWay create/check-payment) or that are cheap to spam but expensive
 # to read (admin-* without a valid token still does a full db_read()).
 #
 # Cloudflare terminates the real client IP into the CF-Connecting-IP header;
@@ -211,7 +320,7 @@ if _HAS_LIMITER:
     # a determined script keeps knocking forever. Anyone who keeps tripping
     # the rate limit gets banned outright for a growing period (10 min → 1
     # hour → 24 hours), checked in before_request so a banned IP is rejected
-    # before touching db_read(), Khmer TopUp, or CamRapidPay — the whole point
+    # before touching db_read(), Khmer TopUp, or ABA PayWay — the whole point
     # is that repeat offenders cost us ~0 CPU/IO per request once banned.
     #
     # Caveat: this state lives in each gunicorn worker's own memory (not
@@ -668,30 +777,25 @@ def create_payment():
         return json_response({"success": False, "error": "Invalid product price"}, 400)
 
     trx_id = f"PVH{int(time.time() * 1000)}{secrets.randbelow(1000)}"
-    reference = trx_id
 
-    if not CAMRAPID_API_KEY:
-        return json_response({"success": False, "error": "CAMRAPID_API_KEY is not configured on the server"}, 500)
+    if not ABA_API_KEY or not ABA_MERCHANT_ID:
+        return json_response({"success": False, "error": "ABA_API_KEY / ABA_MERCHANT_ID is not configured on the server"}, 500)
 
-    try:
-        res = requests.post(
-            CAMRAPID_CREATE_URL,
-            json={
-                "api_key": CAMRAPID_API_KEY,
-                "amount": round(float(amount) * 100) / 100,
-                "reference": reference,
-                "webhook_url": f"{request.host_url.rstrip('/')}/api/webhook/{reference}",
-            },
-            timeout=15,
-        )
-        data = res.json()
-    except requests.RequestException as e:
-        print("camrapid_create request failed:", e)
+    # ABA PayWay's "username" is just a display label on the payment card —
+    # the in-game player ID doubles fine as one here (no Telegram handle to use).
+    aba_data = aba_generate_qr(amount, str(user_id))
+    if not aba_data:
+        print("aba_generate_qr failed:", _last_aba_error)
         return json_response({"success": False, "error": "Failed to generate QR"}, 500)
 
-    if not data.get("success"):
-        print("camrapid_create failed:", data)
+    payment_id = aba_data.get("payment_id")
+    if not payment_id:
+        print("aba_generate_qr returned no payment_id:", aba_data)
         return json_response({"success": False, "error": "Failed to generate QR"}, 500)
+
+    reference = payment_id
+    qr_image = _aba_image_src(aba_data.get("card_image") or aba_data.get("qr_image"))
+    pay_url = aba_data.get("pay_url")
 
     def _mutate(d):
         d["transactions"].append({
@@ -712,7 +816,7 @@ def create_payment():
         })
 
     db_write(_mutate)
-    return json_response({"success": True, "trx_id": trx_id, "qr_data": data.get("qr_code")})
+    return json_response({"success": True, "trx_id": trx_id, "qr_image": qr_image, "pay_url": pay_url})
 
 
 @app.route("/api/check-payment", methods=["POST", "OPTIONS"])
@@ -735,21 +839,15 @@ def check_payment():
     if order["status"] == "expired":
         return json_response({"paid": False, "expired": True})
 
-    if not CAMRAPID_API_KEY:
-        return json_response({"paid": False, "error": "CAMRAPID_API_KEY is not configured on the server"}, 500)
+    if not ABA_API_KEY or not ABA_MERCHANT_ID:
+        return json_response({"paid": False, "error": "ABA_API_KEY / ABA_MERCHANT_ID is not configured on the server"}, 500)
 
     try:
-        res = requests.get(
-            CAMRAPID_CHECK_URL,
-            params={"api_key": CAMRAPID_API_KEY, "reference": order["reference"]},
-            timeout=15,
-        )
-        result = res.json()
-    except requests.RequestException as e:
-        print("camrapid_check request failed:", e)
+        is_paid = aba_check_payment(order["reference"])
+    except Exception as e:  # noqa: BLE001
+        print("aba_check_payment request failed:", e)
         return json_response({"paid": False, "error": "Server error"}, 500)
 
-    is_paid = bool(result.get("success")) and str(result.get("status", "")).lower() in ("success", "paid")
     if not is_paid:
         return json_response({"paid": False})
 
@@ -812,7 +910,7 @@ def check_payment():
 
     zone_part = f" ({order_after['zone_id']})" if order_after.get("zone_id") else ""
     notify_admin(
-        "✅ *PAYMENT CONFIRMED (CamRapidPay)*\n"
+        "✅ *PAYMENT CONFIRMED (ABA PayWay)*\n"
         "--------------------------\n"
         f"🎮 Game: {order_after['game_code']}\n"
         f"🆔 User ID: {order_after['user_id']}{zone_part}\n"

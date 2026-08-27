@@ -35,7 +35,6 @@ as frosted glass panels floating over the sky gradient rather than solid dark ca
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&family=Kantumruy+Pro:wght@400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <style>
 :root{
   --bg-top:#CDF3FF; --bg-bottom:#6FB8E6;
@@ -187,6 +186,7 @@ button{font-family:inherit; cursor:pointer; border:none;}
   box-shadow:0 10px 26px rgba(11,58,91,.20);
   clip-path: polygon(14px 0,100% 0,100% calc(100% - 14px),calc(100% - 14px) 100%,0 100%,0 14px);}
 .qr-frame canvas, .qr-frame img{width:100%; height:auto; display:block;}
+.pay-url-btn{display:block; text-align:center; margin:0 auto 14px; color:var(--gold); font-size:13px; font-weight:600; text-decoration:underline;}
 .pay-amount{text-align:center; font-family:'JetBrains Mono','Kantumruy Pro',monospace; font-size:22px; color:var(--gold); font-weight:700; margin-bottom:4px;}
 .pay-timer{text-align:center; color:var(--muted); font-size:13px; margin-bottom:16px;}
 .pay-status{text-align:center; padding:12px; border-radius:10px; font-size:14px; font-weight:600; display:flex; align-items:center; justify-content:center; gap:6px;}
@@ -544,10 +544,10 @@ async function buyNow(){
     if(btn){ btn.disabled = false; btn.textContent = "ទិញឥឡូវ"; }
     return;
   }
-  openPaymentSheet(r.trx_id, r.qr_data, amount);
+  openPaymentSheet(r.trx_id, r.qr_image, r.pay_url, amount);
 }
 
-function openPaymentSheet(trxId, qrData, amount){
+function openPaymentSheet(trxId, qrImage, payUrl, amount){
   let secondsLeft = PAY_TIMEOUT_SECONDS;
   const root = document.createElement("div");
   root.className = "sheet-backdrop";
@@ -555,15 +555,15 @@ function openPaymentSheet(trxId, qrData, amount){
   root.innerHTML = `
     <div class="sheet">
       <h3>ស្កេន QR ដើម្បីទូទាត់</h3>
-      <div class="sub">CamRapidPay · KHQR</div>
-      <div class="qr-frame" id="qrFrame"></div>
+      <div class="sub">ABA PayWay</div>
+      <div class="qr-frame" id="qrFrame">${qrImage ? `<img src="${qrImage}" alt="ABA PayWay QR">` : ""}</div>
+      ${payUrl ? `<a class="pay-url-btn" href="${payUrl}" target="_blank" rel="noopener">បើកទំព័រទូទាត់</a>` : ""}
       <div class="pay-amount">$${amount.toFixed(2)}</div>
       <div class="pay-timer" id="payTimer">នៅសល់ 05:00</div>
       <div class="pay-status waiting" id="payStatus">កំពុងរង់ចាំការទូទាត់...</div>
       <button class="close-btn" id="closeSheetBtn">បិទ</button>
     </div>`;
   document.body.appendChild(root);
-  new QRCode($("#qrFrame"), { text: qrData, width: 400, height: 400, correctLevel: QRCode.CorrectLevel.M });
 
   $("#closeSheetBtn").onclick = () => closePaymentSheet(trxId, true);
 
