@@ -550,15 +550,10 @@ def require_admin():
     provided = request.headers.get("x-admin-token") or request.headers.get("X-Admin-Token")
     if not provided:
         return json_response({"success": False, "error": "Missing admin token"}, 401)
-    if not hmac.compare_digest(str(provided), str(ADMIN_PANEL_TOKEN)):
-        # TEMP DEBUG — remove after diagnosing the token mismatch.
-        # Prints lengths + repr() only (never the raw values) so trailing
-        # whitespace/newlines picked up from Render's env box or from a
-        # copy-paste are visible in the logs without leaking the secret.
-        print(
-            "ADMIN TOKEN MISMATCH — provided:", repr(provided), "len:", len(provided),
-            "| expected len:", len(ADMIN_PANEL_TOKEN),
-        )
+    # .strip() both sides: a stray trailing space/newline picked up when pasting
+    # the token into Render's env var box (or into the login field) should not
+    # cause an otherwise-correct token to be rejected.
+    if not hmac.compare_digest(str(provided).strip(), str(ADMIN_PANEL_TOKEN).strip()):
         return json_response({"success": False, "error": "Invalid admin token"}, 401)
     return None
 
