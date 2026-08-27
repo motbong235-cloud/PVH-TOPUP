@@ -551,6 +551,14 @@ def require_admin():
     if not provided:
         return json_response({"success": False, "error": "Missing admin token"}, 401)
     if not hmac.compare_digest(str(provided), str(ADMIN_PANEL_TOKEN)):
+        # TEMP DEBUG — remove after diagnosing the token mismatch.
+        # Prints lengths + repr() only (never the raw values) so trailing
+        # whitespace/newlines picked up from Render's env box or from a
+        # copy-paste are visible in the logs without leaking the secret.
+        print(
+            "ADMIN TOKEN MISMATCH — provided:", repr(provided), "len:", len(provided),
+            "| expected len:", len(ADMIN_PANEL_TOKEN),
+        )
         return json_response({"success": False, "error": "Invalid admin token"}, 401)
     return None
 
