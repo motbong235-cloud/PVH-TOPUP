@@ -1,0 +1,45 @@
+{
+  "games": [
+    {
+      "id": 1,
+      "name": "Free Fire",
+      "code": "freefire",
+      "image_url": "https://khmer-topup.com/static/uploads/games/free-fire-real.webp",
+      "khmertopup_slug": "freefire-sgmy",
+      "has_server_id": false,
+      "fulfillment_type": "topup"
+    }
+  ],
+  "products": [
+    {
+      "id": 1,
+      "game_code": "freefire",
+      "name": "WeeklyLite",
+      "price": 0.4,
+      "cost_usd": 0.33,
+      "provider_package": 0,
+      "image_url": "",
+      "section": "recommend"
+    }
+  ],
+  "banners": [],
+  "transactions": [],
+  "site_settings": {
+    "id": 1,
+    "site_name": "PVH TOPUP",
+    "footer_name": "PVH TOPUP",
+    "logo_url": "",
+    "admin_telegram_link": "",
+    "admin_telegram_name": "",
+    "facebook_link": "",
+    "tiktok_link": "",
+    "footer_desc": "",
+    "copyright": "© 2026 PVH TOPUP"
+  },
+  "next_ids": {
+    "games": 2,
+    "products": 2,
+    "banners": 1,
+    "transactions": 1
+  }
+}
