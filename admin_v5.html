@@ -285,6 +285,7 @@ td input:focus{outline:none; border-color:var(--teal);}
       <button data-tab="banners" onclick="switchTab('banners')">🖼️ Banners</button>
       <button data-tab="khmertopup" onclick="switchTab('khmertopup')">🔌 Khmer TopUp</button>
       <button data-tab="transactions" onclick="switchTab('transactions')">🧾 Transactions</button>
+      <button data-tab="security" onclick="switchTab('security')">🛡️ Security</button>
       <button data-tab="settings" onclick="switchTab('settings')">⚙️ Settings</button>
       <div class="spacer"></div>
       <button class="logout" onclick="logout()">↩ Logout</button>
@@ -372,7 +373,7 @@ function switchTab(tab) {
   currentTab = tab;
   closeNav();
   document.querySelectorAll("nav button[data-tab]").forEach(b => b.classList.toggle("active", b.dataset.tab === tab));
-  ({ games: renderGames, products: renderProducts, banners: renderBanners, khmertopup: renderKhmerTopUp, transactions: renderTransactions, settings: renderSettings })[tab]();
+  ({ games: renderGames, products: renderProducts, banners: renderBanners, khmertopup: renderKhmerTopUp, transactions: renderTransactions, security: renderSecurity, settings: renderSettings })[tab]();
 }
 
 function esc(s) {
@@ -961,6 +962,50 @@ async function markDelivered(trxId) {
     toast("បានកត់ត្រាថាបានប្រគល់ diamond ស្រេច");
     loadTransactions();
   } catch (err) { toast(err.message, "err"); }
+}
+
+// ---------- SECURITY ----------
+async function renderSecurity() {
+  const main = document.getElementById("main");
+  main.innerHTML = `<h1 class="khmer">🛡️ Security</h1><p class="sub">IP ដែលកំពុងត្រូវ ban ឬកំពុងប្រមូល strike — ទិន្នន័យនេះនៅក្នុង RAM ប៉ុណ្ណោះ ចាប់ផ្ដើមទទេរាល់ដង server restart/redeploy (មិនមែនប្រវត្តិអចិន្ត្រៃយ៍ទេ)</p>
+    <div class="stats-row" id="secStats"></div>
+    <div class="toolbar">
+      <button class="btn" style="width:auto;padding:10px 20px" onclick="loadSecurityLog()">↻ Refresh</button>
+    </div>
+    <div class="card-panel" id="secTableWrap">${skeletonRows()}</div>`;
+  await loadSecurityLog();
+}
+function fmtSecondsLeft(s) {
+  if (s <= 0) return "-";
+  if (s < 60) return `${s}s`;
+  if (s < 3600) return `${Math.ceil(s / 60)}m`;
+  return `${Math.ceil(s / 3600)}h`;
+}
+async function loadSecurityLog() {
+  const wrap = document.getElementById("secTableWrap");
+  try {
+    const { rows, limiter_enabled } = await api("admin-security-log");
+    if (limiter_enabled === false) {
+      wrap.innerHTML = emptyState("⚠️", "Flask-Limiter មិនទាន់ដំឡើងលើ server ទេ — គ្មាន rate-limit ការពារសោះ");
+      return;
+    }
+    const bannedNow = rows.filter(r => r.banned_now).length;
+    document.getElementById("secStats").innerHTML = `
+      <div class="stat-chip"><div class="n">${rows.length}</div><div class="l">IP មាន strike</div></div>
+      <div class="stat-chip"><div class="n" style="color:var(--red)">${bannedNow}</div><div class="l">កំពុង Ban ឥឡូវនេះ</div></div>`;
+    if (!rows.length) { wrap.innerHTML = emptyState("🛡️", "គ្មាន IP ណាមួយប្រព្រឹត្តខុសទេ តាំងពី server ចាប់ផ្តើមចុងក្រោយ"); return; }
+    wrap.innerHTML = `<table><thead><tr>
+        <th>IP</th><th>Strikes</th><th>Status</th><th>នៅសល់</th><th>ចុងក្រោយ</th>
+      </tr></thead><tbody>${rows.map(r => `
+        <tr class="${r.banned_now ? "new-row" : ""}">
+          <td data-label="IP" class="mono">${esc(r.ip)}</td>
+          <td data-label="Strikes" class="mono">${r.strikes}</td>
+          <td data-label="Status"><span class="badge ${r.banned_now ? "failed" : "expired"}">${r.banned_now ? "BANNED" : "clear"}</span></td>
+          <td data-label="នៅសល់" class="mono">${r.banned_now ? fmtSecondsLeft(r.banned_seconds_left) : "-"}</td>
+          <td data-label="ចុងក្រោយ" class="mono" style="font-size:12px">${r.last_violation ? new Date(r.last_violation * 1000).toLocaleString() : ""}</td>
+        </tr>`).join("")}
+      </tbody></table>`;
+  } catch (err) { wrap.innerHTML = emptyState("⚠️", esc(err.message)); }
 }
 
 // ---------- SETTINGS ----------
