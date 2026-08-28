@@ -499,13 +499,55 @@ def db_read():
         return _load_db()
 
 
+# ---------------------------------------------------------------------------
+# Short-TTL response cache for public, unauthenticated GET endpoints
+#
+# get-home-data / get-topup-data / get-stats / get-site-settings need no auth
+# token, so they're the cheapest targets for a flood — and each one currently
+# does a fresh db_read() (disk I/O + the same global _db_lock everything else
+# uses) plus a fresh AES encrypt on every single hit. Under a burst of
+# thousands of requests/sec that lock becomes the bottleneck and the whole
+# app — including legitimate checkout traffic — stalls or drops connections.
+#
+# A few seconds of staleness on public catalogue/notification data is
+# invisible to real users but means a flood of repeat requests gets served
+# straight from memory instead of touching disk or the lock at all.
+# ---------------------------------------------------------------------------
+_resp_cache = {}
+_resp_cache_lock = threading.Lock()
+_RESP_CACHE_TTL = float(os.environ.get("RESP_CACHE_TTL_SECONDS", "5"))
+
+
+def cached_json(cache_key, ttl, build_fn):
+    """Returns a cached json_response for cache_key if still fresh, else builds
+    it with build_fn(), caches the payload, and returns a response. build_fn
+    must return a JSON-serializable dict (not a Response)."""
+    now = time.time()
+    with _resp_cache_lock:
+        entry = _resp_cache.get(cache_key)
+        if entry and now - entry[0] < ttl:
+            return json_response(entry[1])
+    payload = build_fn()
+    with _resp_cache_lock:
+        _resp_cache[cache_key] = (now, payload)
+        if len(_resp_cache) > 2000:  # safety valve if game codes churn a lot
+            cutoff = now - ttl
+            for k in [k for k, v in _resp_cache.items() if v[0] < cutoff]:
+                _resp_cache.pop(k, None)
+    return json_response(payload)
+
+
 def db_write(mutate_fn):
     """mutate_fn(data) -> result; runs under lock, persists, returns result of mutate_fn"""
     with _db_lock:
         data = _load_db()
         result = mutate_fn(data)
         _save_db(data)
-        return result
+    # Any admin edit (games/products/banners/settings) should show up immediately
+    # instead of waiting out the short public-cache TTL above.
+    with _resp_cache_lock:
+        _resp_cache.clear()
+    return result
 
 
 def next_id(data, table):
@@ -1185,12 +1227,17 @@ def check_topup_status():
 # ---------------------------------------------------------------------------
 
 @app.route("/api/get-home-data", methods=["GET", "OPTIONS"])
+@limiter.limit("60 per minute")
 def get_home_data():
     if request.method == "OPTIONS":
         return json_response({})
-    data = db_read()
-    payload = encrypt_payload({"games": data["games"], "banners": data["banners"]})
-    return json_response({"success": True, "payload": payload})
+
+    def _build():
+        data = db_read()
+        payload = encrypt_payload({"games": data["games"], "banners": data["banners"]})
+        return {"success": True, "payload": payload}
+
+    return cached_json("home-data", _RESP_CACHE_TTL, _build)
 
 
 def _norm_code(v):
@@ -1198,6 +1245,7 @@ def _norm_code(v):
 
 
 @app.route("/api/get-topup-data", methods=["GET", "OPTIONS"])
+@limiter.limit("60 per minute")
 def get_topup_data():
     if request.method == "OPTIONS":
         return json_response({})
@@ -1206,38 +1254,45 @@ def get_topup_data():
     if not game_code:
         return json_response({"success": False, "error": "Missing id"}, 400)
 
-    data = db_read()
     target = _norm_code(game_code)
-    game = next((g for g in data["games"] if _norm_code(g.get("code")) == target), None)
-    if game is None:
-        return json_response({"success": False, "error": "Game not found"}, 404)
 
-    products = [p for p in data["products"] if _norm_code(p.get("game_code")) == target]
+    def _build():
+        data = db_read()
+        game = next((g for g in data["games"] if _norm_code(g.get("code")) == target), None)
+        if game is None:
+            return {"success": False, "error": "Game not found", "_status": 404}
 
-    # Defensive: coerce legacy string prices (saved before the numeric-price fix) so the
-    # frontend's price.toFixed(2) doesn't crash and silently blank out the whole package list.
-    for p in products:
-        if p.get("price") not in (None, ""):
-            try:
-                p["price"] = float(p["price"])
-            except (TypeError, ValueError):
-                p["price"] = 0
-        # Defensive: frontend hides any product whose "section" isn't exactly
-        # "recommend" or "normal" — old rows (added before this field existed)
-        # would otherwise vanish from the site even though they're in the DB.
-        if p.get("section") not in ("recommend", "normal"):
-            p["section"] = "normal"
+        products = [p for p in data["products"] if _norm_code(p.get("game_code")) == target]
 
-    # Public-safe view only: cost_usd (wholesale cost, used for margin math in the
-    # admin panel) and provider_package (the Khmer TopUp package_id) must never reach
-    # the browser — the frontend's AES key/passphrase is public, so anything put
-    # in this payload is effectively readable by anyone, not just "hidden" by
-    # decryption. Whitelist exactly what the storefront needs to render a card.
-    PUBLIC_PRODUCT_FIELDS = ("id", "game_code", "name", "price", "image_url", "section")
-    public_products = [{f: p.get(f) for f in PUBLIC_PRODUCT_FIELDS} for p in products]
+        # Defensive: coerce legacy string prices (saved before the numeric-price fix) so the
+        # frontend's price.toFixed(2) doesn't crash and silently blank out the whole package list.
+        for p in products:
+            if p.get("price") not in (None, ""):
+                try:
+                    p["price"] = float(p["price"])
+                except (TypeError, ValueError):
+                    p["price"] = 0
+            # Defensive: frontend hides any product whose "section" isn't exactly
+            # "recommend" or "normal" — old rows (added before this field existed)
+            # would otherwise vanish from the site even though they're in the DB.
+            if p.get("section") not in ("recommend", "normal"):
+                p["section"] = "normal"
 
-    payload = encrypt_payload({"game": game, "products": public_products})
-    return json_response({"success": True, "payload": payload})
+        # Public-safe view only: cost_usd (wholesale cost, used for margin math in the
+        # admin panel) and provider_package (the Khmer TopUp package_id) must never reach
+        # the browser — the frontend's AES key/passphrase is public, so anything put
+        # in this payload is effectively readable by anyone, not just "hidden" by
+        # decryption. Whitelist exactly what the storefront needs to render a card.
+        PUBLIC_PRODUCT_FIELDS = ("id", "game_code", "name", "price", "image_url", "section")
+        public_products = [{f: p.get(f) for f in PUBLIC_PRODUCT_FIELDS} for p in products]
+
+        payload = encrypt_payload({"game": game, "products": public_products})
+        return {"success": True, "payload": payload}
+
+    result = cached_json(f"topup-data:{target}", _RESP_CACHE_TTL, _build)
+    if isinstance(result.json, dict) and result.json.get("_status"):
+        return json_response({"success": False, "error": result.json["error"]}, result.json["_status"])
+    return result
 
 
 @app.route("/api/check-user", methods=["POST", "OPTIONS"])
@@ -1288,19 +1343,24 @@ def check_user():
 
 
 @app.route("/api/get-stats", methods=["GET", "OPTIONS"])
+@limiter.limit("60 per minute")
 def get_stats():
     if request.method == "OPTIONS":
         return json_response({})
     stat_type = request.args.get("type", "notifications")
-    data = db_read()
-    paid = [t for t in data["transactions"] if t.get("status") == "paid"]
-    paid_sorted = sorted(paid, key=lambda t: t.get("created_at") or "", reverse=True)[:10]
-    slim = [
-        {"user_id": t["user_id"], "game_code": t["game_code"], "amount": t["amount"], "created_at": t["created_at"]}
-        for t in paid_sorted
-    ]
-    payload = encrypt_payload(slim)
-    return json_response({"success": True, "type": stat_type, "payload": payload})
+
+    def _build():
+        data = db_read()
+        paid = [t for t in data["transactions"] if t.get("status") == "paid"]
+        paid_sorted = sorted(paid, key=lambda t: t.get("created_at") or "", reverse=True)[:10]
+        slim = [
+            {"user_id": t["user_id"], "game_code": t["game_code"], "amount": t["amount"], "created_at": t["created_at"]}
+            for t in paid_sorted
+        ]
+        payload = encrypt_payload(slim)
+        return {"success": True, "type": stat_type, "payload": payload}
+
+    return cached_json(f"stats:{stat_type}", _RESP_CACHE_TTL, _build)
 
 
 @app.route("/api/my-orders", methods=["GET", "OPTIONS"])
@@ -1344,24 +1404,29 @@ def my_orders():
 
 
 @app.route("/api/get-site-settings", methods=["GET", "OPTIONS"])
+@limiter.limit("60 per minute")
 def get_site_settings():
     if request.method == "OPTIONS":
         return json_response({})
-    s = db_read()["site_settings"]
-    return json_response({
-        "success": True,
-        "settings": {
-            "SITE_NAME": s.get("site_name") or "PVH TOPUP",
-            "FOOTER_NAME": s.get("footer_name") or "PVH TOPUP",
-            "LOGO_URL": s.get("logo_url") or "",
-            "ADMIN_TELEGRAM_LINK": s.get("admin_telegram_link") or "",
-            "ADMIN_TELEGRAM_NAME": s.get("admin_telegram_name") or "",
-            "FACEBOOK_LINK": s.get("facebook_link") or "",
-            "TIKTOK_LINK": s.get("tiktok_link") or "",
-            "FOOTER_DESC": s.get("footer_desc") or "",
-            "COPYRIGHT": s.get("copyright") or "",
-        },
-    })
+
+    def _build():
+        s = db_read()["site_settings"]
+        return {
+            "success": True,
+            "settings": {
+                "SITE_NAME": s.get("site_name") or "PVH TOPUP",
+                "FOOTER_NAME": s.get("footer_name") or "PVH TOPUP",
+                "LOGO_URL": s.get("logo_url") or "",
+                "ADMIN_TELEGRAM_LINK": s.get("admin_telegram_link") or "",
+                "ADMIN_TELEGRAM_NAME": s.get("admin_telegram_name") or "",
+                "FACEBOOK_LINK": s.get("facebook_link") or "",
+                "TIKTOK_LINK": s.get("tiktok_link") or "",
+                "FOOTER_DESC": s.get("footer_desc") or "",
+                "COPYRIGHT": s.get("copyright") or "",
+            },
+        }
+
+    return cached_json("site-settings", _RESP_CACHE_TTL, _build)
 
 
 # ---------------------------------------------------------------------------
@@ -1681,8 +1746,16 @@ def _handle_unexpected_error(e):
 
 
 if __name__ == "__main__":
+    # NOTE: app.run() is Flask's single-threaded dev server — it can only handle
+    # one request at a time. Under real traffic (or a DDoS burst) every request
+    # queues behind the current one, and clients see hangs/dropped connections
+    # long before the rate limiter above even gets a chance to reject anything.
+    # This is fine for local testing (python server_v16.py) but NEVER for
+    # production. In production, run with gunicorn instead — see Procfile /
+    # the run command below — which uses multiple worker processes so one slow
+    # or malicious request can't block everyone else.
     port = int(os.environ.get("PORT", 5000))
-    print(f"PVH TOPUP server running on http://0.0.0.0:{port}")
+    print(f"PVH TOPUP server running on http://0.0.0.0:{port}  (dev server — see Procfile for production)")
     print(f"  Site : http://localhost:{port}/")
     print(f"  Admin: http://localhost:{port}/admin (token = ADMIN_PANEL_TOKEN)")
-    app.run(host="0.0.0.0", port=port, debug=False)
+    app.run(host="0.0.0.0", port=port, debug=False, threaded=True)
