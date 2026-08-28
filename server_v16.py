@@ -138,20 +138,14 @@ TELEGRAM_BOT_TOKEN = os.environ.get("TELEGRAM_BOT_TOKEN", "")
 ADMIN_CHAT_ID = os.environ.get("ADMIN_CHAT_ID", "")
 ADMIN_PANEL_TOKEN = os.environ.get("ADMIN_PANEL_TOKEN", "change-this-to-a-long-random-string")
 
-# Admin IP allowlist — comma-separated list of the admins' own IP addresses,
-# e.g. "203.0.113.9,203.0.113.44". When set, both the /backoffice-9f3m page
-# and every /api/admin-* endpoint reject any request from an IP not on this
-# list (with a plain 404, so it looks like the route doesn't exist at all —
-# consistent with the private-slug approach already in place). When this env
-# var is unset/empty, the IP check is skipped entirely (falls back to the
-# x-admin-token check only) so you don't get locked out by default.
-ADMIN_ALLOWED_IPS = {
-    ip.strip() for ip in os.environ.get("ADMIN_ALLOWED_IPS", "").split(",") if ip.strip()
+# Admin OTP allowlist — comma-separated Telegram chat IDs of the admins who
+# are allowed to open the /backoffice-9f3m page at all, e.g. "111111,222222".
+# Unlike an IP allowlist this doesn't break when someone's mobile carrier
+# hands them a new IP: it's tied to who can read their own Telegram, not to
+# which network they're on. See _admin_otp_* helpers below.
+ADMIN_OTP_CHAT_IDS = {
+    cid.strip() for cid in os.environ.get("ADMIN_CHAT_IDS", "").split(",") if cid.strip()
 }
-
-
-def _admin_ip_allowed():
-    return not ADMIN_ALLOWED_IPS or _client_ip() in ADMIN_ALLOWED_IPS
 
 # ABA PayWay (via KHMER SYSTEM — khmer-system.com) — same integration as
 # premium_shop_bot_v16.py's aba_generate_qr()/aba_check_payment().
@@ -558,12 +552,120 @@ def find_game(data, game_code):
     return next((g for g in data.get("games", []) if g.get("code") == game_code), None)
 
 
+# ---------------------------------------------------------------------------
+# Admin page gate: Telegram OTP + signed device cookie
+#
+# /backoffice-9f3m first checks for a valid "pvh_admin_device" cookie. If
+# missing/invalid it serves a small self-contained gate page (not
+# admin_v5.html) asking for a 6-digit code; the code is requested via
+# /api/admin-request-otp (sent to every chat id in ADMIN_OTP_CHAT_IDS) and
+# checked via /api/admin-verify-otp, which sets the cookie on success.
+#
+# The cookie is a stateless HMAC (signed with ADMIN_PANEL_TOKEN) so it keeps
+# working across server restarts/redeploys even though the in-memory OTP
+# store does not — the OTP itself only needs to survive the ~5 minutes
+# between requesting and entering it.
+# ---------------------------------------------------------------------------
+_otp_store = {}  # otp_id -> {"code": "123456", "expires": epoch}
+_OTP_TTL_SECONDS = 5 * 60
+_DEVICE_COOKIE_NAME = "pvh_admin_device"
+_DEVICE_COOKIE_TTL_SECONDS = 90 * 24 * 3600  # 90 days
+
+
+def _device_cookie_secret():
+    return ADMIN_PANEL_TOKEN.encode("utf-8")
+
+
+def _sign_device_cookie(expires_at):
+    payload = str(int(expires_at))
+    sig = hmac.new(_device_cookie_secret(), payload.encode("utf-8"), hashlib.sha256).hexdigest()
+    return f"{payload}.{sig}"
+
+
+def _device_cookie_valid(value):
+    if not value or "." not in value:
+        return False
+    payload, _, sig = value.partition(".")
+    expected = hmac.new(_device_cookie_secret(), payload.encode("utf-8"), hashlib.sha256).hexdigest()
+    if not hmac.compare_digest(sig, expected):
+        return False
+    try:
+        return int(payload) > time.time()
+    except ValueError:
+        return False
+
+
+def _send_telegram_to(chat_id, text):
+    if not TELEGRAM_BOT_TOKEN:
+        return
+    try:
+        requests.post(
+            f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/sendMessage",
+            json={"chat_id": chat_id, "text": text, "parse_mode": "Markdown"},
+            timeout=10,
+        )
+    except requests.RequestException as e:
+        print("Telegram OTP send failed:", e)
+
+
+_ADMIN_GATE_HTML = """<!doctype html>
+<html lang="km"><head><meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PVH TOPUP — Admin</title>
+<style>
+body{margin:0;min-height:100vh;display:flex;align-items:center;justify-content:center;
+  background:#F6F1E4;font-family:sans-serif;color:#1C1B19;padding:20px;}
+.card{background:#FFFDF6;border:1.5px solid #1C1B19;border-radius:4px;padding:36px 30px;
+  width:100%;max-width:320px;text-align:center;box-shadow:3px 3px 0 #B9AF90;}
+h1{font-size:20px;margin:0 0 6px;}
+p{color:#6B6558;font-size:12.5px;margin:0 0 20px;}
+input{width:100%;padding:12px;border-radius:3px;border:1.5px solid #1C1B19;background:#F6F1E4;
+  color:#1C1B19;font-size:20px;text-align:center;letter-spacing:6px;margin-bottom:12px;box-sizing:border-box;}
+button{width:100%;padding:12px;border-radius:3px;border:1.5px solid #1C1B19;background:#1E5AA8;
+  color:#fff;font-weight:700;font-size:14px;cursor:pointer;margin-bottom:8px;}
+button.secondary{background:#F6F1E4;color:#1C1B19;}
+.err{color:#B23A2E;font-size:12.5px;min-height:16px;margin-top:6px;}
+</style></head>
+<body><div class="card">
+<h1>PVH TOPUP Admin</h1>
+<p id="step1">ចុចខាងក្រោមដើម្បីផ្ញើកូដទៅ Telegram</p>
+<div id="requestView">
+  <button onclick="requestOtp()">ផ្ញើកូដទៅ Telegram</button>
+</div>
+<div id="verifyView" style="display:none">
+  <input id="code" maxlength="6" inputmode="numeric" placeholder="000000">
+  <button onclick="verifyOtp()">បញ្ជាក់</button>
+  <button class="secondary" onclick="requestOtp()">ផ្ញើកូដម្តងទៀត</button>
+</div>
+<div class="err" id="err"></div>
+</div>
+<script>
+let otpId = null;
+async function requestOtp(){
+  document.getElementById('err').textContent = '';
+  const res = await fetch('/api/admin-request-otp', {method:'POST'});
+  const data = await res.json();
+  if(!data.success){ document.getElementById('err').textContent = data.error || 'បរាជ័យ'; return; }
+  otpId = data.otp_id;
+  document.getElementById('requestView').style.display = 'none';
+  document.getElementById('verifyView').style.display = 'block';
+  document.getElementById('step1').textContent = 'វាយកូដ 6 ខ្ទង់ដែលទទួលបានក្នុង Telegram';
+}
+async function verifyOtp(){
+  const code = document.getElementById('code').value.trim();
+  const res = await fetch('/api/admin-verify-otp', {
+    method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({otp_id: otpId, code})
+  });
+  const data = await res.json();
+  if(!data.success){ document.getElementById('err').textContent = data.error || 'កូដមិនត្រឹមត្រូវ'; return; }
+  location.reload();
+}
+</script></body></html>"""
+
+
 def require_admin():
     """Returns None if authorized, else a Flask response to short-circuit with."""
-    if not _admin_ip_allowed():
-        # Same shape as an unmatched route — don't reveal that an admin API
-        # exists at all to an IP that isn't allowed to use it.
-        return json_response({"success": False, "error": "Not found"}, 404)
     if not ADMIN_PANEL_TOKEN:
         return json_response({"success": False, "error": "ADMIN_PANEL_TOKEN is not configured on the server"}, 500)
     provided = request.headers.get("x-admin-token") or request.headers.get("X-Admin-Token")
@@ -744,8 +846,8 @@ def serve_index():
 @app.route("/backoffice-9f3m")
 @app.route("/backoffice-9f3m/")
 def serve_admin():
-    if not _admin_ip_allowed():
-        return json_response({"success": False, "error": "Not found"}, 404)
+    if not _device_cookie_valid(request.cookies.get(_DEVICE_COOKIE_NAME)):
+        return _ADMIN_GATE_HTML
     try:
         return send_from_directory(STATIC_DIR, "admin_v5.html")
     except FileNotFoundError:
@@ -756,6 +858,52 @@ def serve_admin():
             {"success": False, "error": "admin_v5.html not found — upload the admin panel HTML alongside server_v16.py"},
             404,
         )
+
+
+@app.route("/api/admin-request-otp", methods=["POST"])
+def admin_request_otp():
+    if not ADMIN_OTP_CHAT_IDS:
+        return json_response(
+            {"success": False, "error": "ADMIN_CHAT_IDS is not configured on the server"}, 500
+        )
+    if not TELEGRAM_BOT_TOKEN:
+        return json_response(
+            {"success": False, "error": "TELEGRAM_BOT_TOKEN is not configured on the server"}, 500
+        )
+    otp_id = uuid.uuid4().hex
+    code = f"{secrets.randbelow(1_000_000):06d}"
+    _otp_store[otp_id] = {"code": code, "expires": time.time() + _OTP_TTL_SECONDS}
+    # prune old entries so this dict doesn't grow forever
+    now = time.time()
+    for k in [k for k, v in _otp_store.items() if v["expires"] < now]:
+        _otp_store.pop(k, None)
+    for chat_id in ADMIN_OTP_CHAT_IDS:
+        _send_telegram_to(chat_id, f"🔐 PVH TOPUP admin login code: `{code}`\nឆាប់ផុតកំណត់ក្នុង 5 នាទី។")
+    return json_response({"success": True, "otp_id": otp_id})
+
+
+@app.route("/api/admin-verify-otp", methods=["POST"])
+def admin_verify_otp():
+    body = request.get_json(silent=True) or {}
+    otp_id = str(body.get("otp_id") or "")
+    code = str(body.get("code") or "").strip()
+    entry = _otp_store.get(otp_id)
+    if not entry or entry["expires"] < time.time():
+        return json_response({"success": False, "error": "កូដផុតកំណត់ — សូមស្នើសុំកូដថ្មី"}, 400)
+    if not hmac.compare_digest(code, entry["code"]):
+        return json_response({"success": False, "error": "កូដមិនត្រឹមត្រូវ"}, 401)
+    _otp_store.pop(otp_id, None)
+    expires_at = time.time() + _DEVICE_COOKIE_TTL_SECONDS
+    resp = json_response({"success": True})
+    resp.set_cookie(
+        _DEVICE_COOKIE_NAME,
+        _sign_device_cookie(expires_at),
+        max_age=_DEVICE_COOKIE_TTL_SECONDS,
+        httponly=True,
+        secure=True,
+        samesite="Lax",
+    )
+    return resp
 
 
 # ---------------------------------------------------------------------------
