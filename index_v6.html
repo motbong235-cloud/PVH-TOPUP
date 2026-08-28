@@ -62,6 +62,7 @@ seam between image and label, and successful payments get a rotated ink-stamp ba
 html,body{margin:0; padding:0; min-height:100%;
   background:
     repeating-linear-gradient(180deg, transparent 0 63px, rgba(28,27,25,.035) 63px 64px),
+    radial-gradient(rgba(28,27,25,.03) 1px, transparent 1px) 0 0/14px 14px,
     var(--paper);
   color:var(--text); font-family:'Archivo','Kantumruy Pro',sans-serif; overflow-x:hidden;}
 h1,h2,h3,.display,.topbar .sitename,footer .fname,.detail-header .gname,.game-card .info .gname,.product-card .pname,.btn-primary,.sheet h3{
@@ -90,8 +91,13 @@ button{font-family:inherit; cursor:pointer; border:none; background:none;}
   padding:13px 16px; background:var(--paper);
   border-bottom:2px dashed var(--line-strong);
 }
-.topbar img.logo{height:32px; width:32px; border-radius:6px; object-fit:cover; border:1.5px solid var(--ink);}
-.topbar .sitename{font-size:22px; letter-spacing:1.2px;}
+.topbar img.logo{height:32px; width:32px; border-radius:6px; object-fit:cover; border:1.5px solid var(--ink); box-shadow:1.5px 1.5px 0 var(--line-strong);}
+.topbar .sitename{font-size:22px; letter-spacing:1.2px; position:relative;}
+.topbar .sitename::after{
+  content:"KHQR"; position:absolute; top:-6px; right:-30px; font-family:'Space Mono',monospace;
+  font-size:7.5px; font-weight:700; color:var(--bakong); border:1px solid var(--bakong);
+  border-radius:2px; padding:1px 3px; transform:rotate(-8deg); letter-spacing:.5px;
+}
 .topbar .spacer{flex:1;}
 .topbar .contact-btn{
   display:flex; align-items:center; gap:6px; padding:8px 12px;
@@ -112,19 +118,21 @@ button{font-family:inherit; cursor:pointer; border:none; background:none;}
 .hero-slide{flex:0 0 100%; height:100%;}
 .hero-slide img{width:100%; height:100%; object-fit:cover; display:block;}
 .hero-dots{position:absolute; bottom:16px; left:0; right:0; display:flex; justify-content:center; gap:6px;}
-.hero-dots span{width:5px; height:5px; border-radius:50%; background:rgba(28,27,25,.28);}
+.hero-dots span{width:5px; height:5px; border-radius:50%; background:rgba(28,27,25,.28); transition:width .3s ease, border-radius .3s ease, background .3s ease;}
 .hero-dots span.active{background:var(--stamp); width:15px; border-radius:3px;}
 .hero-empty{display:flex; align-items:center; justify-content:center; gap:6px; height:100%; color:var(--muted); font-size:13px; background:
   repeating-linear-gradient(135deg, var(--paper-2) 0 10px, var(--paper) 10px 20px);}
 
 /* ---------- small promo ---------- */
 .promo-strip{display:flex; gap:10px; padding:14px 16px 4px; overflow-x:auto;}
-.promo-strip img{height:62px; border-radius:2px; flex:0 0 auto; border:1.5px solid var(--ink); box-shadow:2px 2px 0 var(--line-strong);}
+.promo-strip img{height:62px; border-radius:2px; flex:0 0 auto; border:1.5px solid var(--ink); box-shadow:2px 2px 0 var(--line-strong); transition:transform .15s ease, box-shadow .15s ease;}
+.promo-strip img:active{transform:translate(2px,2px) rotate(-1deg); box-shadow:0 0 0 var(--line-strong);}
 
 /* ---------- section ---------- */
 .section{padding:20px 16px 10px;}
 .section h2{font-size:19px; color:var(--ink); font-weight:400; letter-spacing:1px; margin:0 0 12px;
   display:flex; align-items:center; gap:10px;}
+.section h2::before{content:""; width:8px; height:8px; border-radius:50%; background:var(--stamp); flex-shrink:0;}
 .section h2::after{content:""; flex:1; height:0; border-top:2px dashed var(--line-strong); transform:translateY(-2px);}
 
 /* ---------- game grid: ticket cards ---------- */
@@ -133,10 +141,15 @@ button{font-family:inherit; cursor:pointer; border:none; background:none;}
   background:var(--card); border:1.5px solid var(--ink);
   box-shadow:3px 3px 0 var(--line-strong);
 }
+@keyframes cardIn{from{opacity:0; transform:translateY(12px) scale(.97);} to{opacity:1; transform:translateY(0) scale(1);}}
 .game-card{
   position:relative; overflow:visible;
   display:flex; flex-direction:column;
+  animation:cardIn .4s cubic-bezier(.2,.8,.2,1) both;
 }
+.game-card:nth-child(1){animation-delay:.03s;} .game-card:nth-child(2){animation-delay:.08s;}
+.game-card:nth-child(3){animation-delay:.13s;} .game-card:nth-child(4){animation-delay:.18s;}
+.game-card:nth-child(n+5){animation-delay:.22s;}
 .game-card .media{position:relative; aspect-ratio:1/.8; overflow:hidden; background:var(--paper-2);}
 .game-card .media img{width:100%; height:100%; object-fit:cover; display:block; transition:transform .35s ease;}
 .game-card:active .media img{transform:scale(1.08);}
@@ -158,12 +171,13 @@ button{font-family:inherit; cursor:pointer; border:none; background:none;}
 .game-card .info .cta svg{width:10px; height:10px;}
 
 /* ---------- product grid (game detail) ---------- */
-.detail-header{display:flex; align-items:center; gap:12px; padding:16px 16px 12px;}
+@keyframes slideInLeft{from{opacity:0; transform:translateX(-14px);} to{opacity:1; transform:translateX(0);}}
+.detail-header{display:flex; align-items:center; gap:12px; padding:16px 16px 12px; animation:slideInLeft .3s cubic-bezier(.2,.8,.2,1) both;}
 .back-btn{width:36px; height:36px; border-radius:4px; background:var(--card); border:1.5px solid var(--ink);
   display:flex; align-items:center; justify-content:center; font-size:18px; box-shadow:2px 2px 0 var(--line-strong);}
 .detail-header .gname{font-size:22px; letter-spacing:.8px;}
 
-.id-form{margin:0 16px 16px; padding:16px 14px; position:relative;}
+.id-form{margin:0 16px 16px; padding:16px 14px; position:relative; animation:cardIn .35s cubic-bezier(.2,.8,.2,1) .05s both;}
 .id-form label{font-size:11px; color:var(--muted); text-transform:uppercase; letter-spacing:.6px; display:block; margin-bottom:7px; font-weight:700;}
 .id-row{display:flex; gap:8px; margin-bottom:10px;}
 .id-field{position:relative; flex:1;}
@@ -171,9 +185,10 @@ button{font-family:inherit; cursor:pointer; border:none; background:none;}
 .id-field .field-icon{position:absolute; left:11px; top:50%; transform:translateY(-50%); color:var(--muted); pointer-events:none; z-index:1;}
 .id-field .field-icon svg{width:16px; height:16px;}
 .id-row input{width:100%; background:var(--paper); border:1.5px solid var(--ink); color:var(--ink);
-  padding:11px 12px 11px 34px; border-radius:3px; font-size:14px; font-family:'Space Mono','Kantumruy Pro',monospace;}
+  padding:11px 12px 11px 34px; border-radius:3px; font-size:14px; font-family:'Space Mono','Kantumruy Pro',monospace; transition:border-color .15s ease;}
 .id-row input:focus{outline:2px solid var(--bakong); outline-offset:1px;}
-.id-status{font-size:13px; min-height:18px; padding-top:2px; display:flex; align-items:center; gap:5px; font-weight:600;}
+@keyframes statusIn{from{opacity:0; transform:translateY(-3px);} to{opacity:1; transform:translateY(0);}}
+.id-status{font-size:13px; min-height:18px; padding-top:2px; display:flex; align-items:center; gap:5px; font-weight:600; animation:statusIn .2s ease both;}
 .id-status.ok{color:var(--paid);}
 .id-status.err{color:var(--stamp);}
 .id-status.checking{color:var(--muted);}
@@ -185,12 +200,24 @@ button{font-family:inherit; cursor:pointer; border:none; background:none;}
 .id-chip svg{width:12px; height:12px;}
 
 .product-grid{display:grid; grid-template-columns:1fr 1fr; gap:12px; padding:0 16px 18px;}
+@keyframes stampPop{0%{opacity:0; transform:scale(.3) rotate(-20deg);} 60%{opacity:1; transform:scale(1.15) rotate(4deg);} 100%{opacity:1; transform:scale(1) rotate(0);}}
 .product-card{
   padding:12px 12px 14px; text-align:center; position:relative;
+  animation:cardIn .35s cubic-bezier(.2,.8,.2,1) both;
 }
+.product-card:nth-child(1){animation-delay:.02s;} .product-card:nth-child(2){animation-delay:.06s;}
+.product-card:nth-child(3){animation-delay:.1s;} .product-card:nth-child(4){animation-delay:.14s;}
+.product-card:nth-child(n+5){animation-delay:.16s;}
 .product-card.selected{border-color:var(--bakong); box-shadow:3px 3px 0 var(--bakong);}
+.product-card.selected::after{
+  animation:stampPop .35s cubic-bezier(.3,1.6,.5,1) both;
+  content:"✓"; position:absolute; top:-9px; right:-9px; width:22px; height:22px; border-radius:50%;
+  background:var(--bakong); color:#fff; font-size:12px; font-weight:700; display:flex; align-items:center;
+  justify-content:center; border:1.5px solid var(--ink); box-shadow:1.5px 1.5px 0 var(--ink);
+}
 .product-card .badge{position:absolute; top:-8px; left:10px; font-size:10px; background:var(--stamp); color:#fff;
-  padding:3px 7px; border-radius:20px; font-weight:700; display:flex; align-items:center; gap:3px; border:1.5px solid var(--ink);}
+  padding:3px 8px 3px 6px; border-radius:20px; font-weight:700; display:flex; align-items:center; gap:4px; border:1.5px solid var(--ink);}
+.product-card .badge::before{content:""; width:5px; height:5px; border-radius:50%; background:#fff; flex-shrink:0;}
 .product-card .pmedia{width:52px; height:52px; margin:0 auto 8px; border-radius:50%; overflow:hidden;
   background:var(--paper-2); border:1.5px dashed var(--line-strong);
   display:flex; align-items:center; justify-content:center;}
@@ -201,10 +228,11 @@ button{font-family:inherit; cursor:pointer; border:none; background:none;}
   min-height:2.5em; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden;}
 .product-card .pprice{font-family:'Space Mono','Kantumruy Pro',monospace; color:var(--stamp); font-weight:700; font-size:15px;}
 
+@keyframes barUp{from{opacity:0; transform:translateY(100%);} to{opacity:1; transform:translateY(0);}}
 .buy-bar{position:sticky; bottom:0; z-index:40; padding:14px 16px calc(14px + env(safe-area-inset-bottom));
   background:var(--card); border-top:2px dashed var(--line-strong);
   box-shadow:0 -3px 0 var(--paper), 0 -4px 0 var(--line);
-  display:flex; align-items:center; gap:12px;}
+  display:flex; align-items:center; gap:12px; animation:barUp .3s cubic-bezier(.2,.8,.2,1) both;}
 .buy-bar .total{flex:1;}
 .buy-bar .total .l{font-size:11px; color:var(--muted); text-transform:uppercase; letter-spacing:.5px; font-weight:700;}
 .buy-bar .total .v{font-family:'Space Mono','Kantumruy Pro',monospace; font-size:19px; font-weight:700; color:var(--stamp);}
@@ -215,8 +243,12 @@ button{font-family:inherit; cursor:pointer; border:none; background:none;}
 .btn-primary:disabled{background:var(--paper-2); color:var(--muted); box-shadow:3px 3px 0 var(--line);}
 
 /* ---------- payment sheet: torn receipt slip ---------- */
-.sheet-backdrop{position:fixed; inset:0; background:rgba(28,27,25,.55); z-index:90; display:flex; align-items:flex-end;}
+@keyframes backdropIn{from{opacity:0;} to{opacity:1;}}
+@keyframes sheetUp{from{opacity:0; transform:translateY(26px);} to{opacity:1; transform:translateY(0);}}
+.sheet-backdrop{position:fixed; inset:0; background:rgba(28,27,25,.55); z-index:90; display:flex; align-items:flex-end;
+  animation:backdropIn .2s ease both;}
 .sheet{width:100%; background:var(--card); padding:26px 20px calc(20px + env(safe-area-inset-bottom));
+  animation:sheetUp .32s cubic-bezier(.2,.8,.2,1) both;
   clip-path: polygon(
     0 14px, 3% 5px, 6% 14px, 9% 5px, 12% 14px, 15% 5px, 18% 14px, 21% 5px, 24% 14px, 27% 5px,
     30% 14px, 33% 5px, 36% 14px, 39% 5px, 42% 14px, 45% 5px, 48% 14px, 51% 5px, 54% 14px, 57% 5px,
@@ -228,33 +260,44 @@ button{font-family:inherit; cursor:pointer; border:none; background:none;}
 }
 .sheet h3{margin:10px 0 4px; font-size:24px; letter-spacing:.6px;}
 .sheet .sub{color:var(--muted); font-size:12px; margin-bottom:16px; text-transform:uppercase; letter-spacing:1px; font-weight:700;}
+@keyframes qrPulse{0%,100%{box-shadow:3px 3px 0 var(--line-strong);} 50%{box-shadow:3px 3px 0 var(--bakong);}}
 .qr-frame{background:#fff; padding:16px; margin:0 auto 14px; width:min(230px,68vw);
-  border:1.5px solid var(--ink); box-shadow:3px 3px 0 var(--line-strong);}
+  border:1.5px solid var(--ink); box-shadow:3px 3px 0 var(--line-strong);
+  animation:qrPulse 2.2s ease-in-out infinite;}
 .qr-frame canvas, .qr-frame img{width:100%; height:auto; display:block;}
 .pay-url-btn{display:block; text-align:center; margin:0 auto 14px; color:var(--bakong); font-size:13px; font-weight:700; text-decoration:underline;}
 .pay-amount{text-align:center; font-family:'Space Mono','Kantumruy Pro',monospace; font-size:26px; color:var(--stamp); font-weight:700; margin-bottom:4px;}
 .pay-timer{text-align:center; color:var(--muted); font-size:13px; margin-bottom:16px; font-family:'Space Mono',monospace;}
+@keyframes stampSlam{0%{opacity:0; transform:scale(2) rotate(-1.2deg);} 70%{opacity:1; transform:scale(.92) rotate(-1.2deg);} 100%{opacity:1; transform:scale(1) rotate(-1.2deg);}}
 .pay-status{text-align:center; padding:13px; border-radius:3px; font-size:14px; font-weight:700; display:flex; align-items:center; justify-content:center; gap:6px;
   border:1.5px dashed var(--line-strong);}
 .pay-status.waiting{background:var(--paper); color:var(--muted);}
-.pay-status.success{background:#fff; color:var(--paid); border:3px solid var(--paid); transform:rotate(-1.2deg);
+.pay-status.success{background:#fff; color:var(--paid); border:3px solid var(--paid); transform:rotate(-1.2deg); animation:stampSlam .4s cubic-bezier(.2,.8,.2,1) both;
   text-transform:uppercase; letter-spacing:1px;}
 .pay-status.processing{background:rgba(30,90,168,.08); color:var(--bakong); border-style:solid; border-color:var(--bakong);}
-.pay-status.failed{background:#fff; color:var(--stamp); border:3px solid var(--stamp); transform:rotate(-1.2deg);
+.pay-status.failed{background:#fff; color:var(--stamp); border:3px solid var(--stamp); transform:rotate(-1.2deg); animation:stampSlam .4s cubic-bezier(.2,.8,.2,1) both;
   text-transform:uppercase; letter-spacing:1px;}
 
-.receipt{margin-top:16px; background:var(--paper); border:1.5px dashed var(--line-strong); border-radius:3px; padding:14px 16px;}
-.receipt-row{display:flex; justify-content:space-between; gap:12px; padding:6px 0; font-size:13px; border-bottom:1px dotted var(--line-strong);}
+@keyframes fadeUp{from{opacity:0; transform:translateY(8px);} to{opacity:1; transform:translateY(0);}}
+.receipt{margin-top:16px; background:var(--paper); border:1.5px dashed var(--line-strong); border-radius:3px; padding:14px 16px;
+  animation:fadeUp .3s ease both;}
+.receipt-row{display:flex; justify-content:space-between; gap:12px; padding:6px 0; font-size:13px; border-bottom:1px dotted var(--line-strong);
+  animation:fadeUp .3s ease both;}
+.receipt-row:nth-child(1){animation-delay:.03s;} .receipt-row:nth-child(2){animation-delay:.07s;}
+.receipt-row:nth-child(3){animation-delay:.11s;} .receipt-row:nth-child(4){animation-delay:.15s;}
+.receipt-row:nth-child(n+5){animation-delay:.18s;}
 .receipt-row:last-child{border-bottom:none;}
 .receipt-row .l{color:var(--muted);}
 .receipt-row .v{font-family:'Space Mono',monospace; font-weight:700; text-align:right;}
 .receipt-total{display:flex; justify-content:space-between; margin-top:8px; padding-top:10px; border-top:2px dashed var(--line-strong); font-weight:700;}
 .receipt-total .v{font-family:'Space Mono',monospace; color:var(--stamp); font-size:16px;}
+@keyframes copyBounce{0%{transform:scale(1);} 40%{transform:scale(1.04);} 100%{transform:scale(1);}}
 .copy-receipt-btn{width:100%; margin-top:12px; padding:11px; border-radius:3px; background:var(--bakong); color:#fff; font-weight:700; font-size:13px;
-  display:flex; align-items:center; justify-content:center; gap:6px; border:1.5px solid var(--ink); box-shadow:2px 2px 0 var(--ink);}
-.copy-receipt-btn.copied{background:var(--paid);}
+  display:flex; align-items:center; justify-content:center; gap:6px; border:1.5px solid var(--ink); box-shadow:2px 2px 0 var(--ink);
+  transition:background .2s ease;}
+.copy-receipt-btn.copied{background:var(--paid); animation:copyBounce .3s ease;}
 .giftcard-note{font-size:13px; color:var(--muted); line-height:1.5; padding:4px 0; display:flex; align-items:center; gap:8px;}
-.giftcard-code-box{margin-top:10px; padding:14px; border-radius:3px; background:#fff; border:1.5px dashed var(--stamp); text-align:center;}
+.giftcard-code-box{margin-top:10px; padding:14px; border-radius:3px; background:#fff; border:1.5px dashed var(--stamp); text-align:center; animation:fadeUp .3s ease .1s both;}
 .giftcard-code-box .l{font-size:11.5px; color:var(--muted); margin-bottom:6px; display:flex; align-items:center; justify-content:center; gap:5px; text-transform:uppercase; letter-spacing:.5px; font-weight:700;}
 .giftcard-code-box .code-value{font-family:'Space Mono',monospace; font-size:15px; font-weight:700; color:var(--ink); letter-spacing:.5px; word-break:break-all;}
 .sheet .close-btn{width:100%; margin-top:16px; padding:12px; background:var(--paper); color:var(--muted); border-radius:3px; font-weight:700;
