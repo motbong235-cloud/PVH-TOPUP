@@ -1024,6 +1024,14 @@ async function renderSettings() {
           ${imageField("logo_url", s.logo_url, "https://...")}
         </div>
         <div>
+          <label>KHQR Logo (សម្រាប់ badge "យើងទទួលទូទាត់" — Download ពី bakong.nbc.gov.kh ផ្លូវការតែប៉ុណ្ណោះ)</label>
+          ${imageField("khqr_logo_url", s.khqr_logo_url, "https://...")}
+        </div>
+        <div>
+          <label>ABA Logo (សម្រាប់ badge "យើងទទួលទូទាត់" — Download ពី ABA merchant portal ផ្លូវការតែប៉ុណ្ណោះ)</label>
+          ${imageField("aba_logo_url", s.aba_logo_url, "https://...")}
+        </div>
+        <div>
           <label>Site Name</label>
           <input id="s_site_name" value="${esc(s.site_name || "")}" placeholder="PVH TOPUP">
         </div>
@@ -1071,6 +1079,8 @@ async function saveSettings() {
   const settingsForm = document.querySelector(".settings-form");
   const body = {
     logo_url: settingsForm.querySelector('input[data-f="logo_url"]').value.trim(),
+    khqr_logo_url: settingsForm.querySelector('input[data-f="khqr_logo_url"]').value.trim(),
+    aba_logo_url: settingsForm.querySelector('input[data-f="aba_logo_url"]').value.trim(),
     site_name: document.getElementById("s_site_name").value.trim(),
     footer_name: document.getElementById("s_footer_name").value.trim(),
     admin_telegram_link: document.getElementById("s_tg_link").value.trim(),

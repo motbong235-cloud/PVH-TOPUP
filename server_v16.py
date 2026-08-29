@@ -851,6 +851,24 @@ def serve_index():
     return send_from_directory(STATIC_DIR, "index_v6.html")
 
 
+@app.route("/terms")
+@app.route("/terms/")
+def serve_terms():
+    try:
+        return send_from_directory(STATIC_DIR, "terms.html")
+    except FileNotFoundError:
+        return json_response({"success": False, "error": "terms.html not found — upload it alongside server_v16.py"}, 404)
+
+
+@app.route("/privacy")
+@app.route("/privacy/")
+def serve_privacy():
+    try:
+        return send_from_directory(STATIC_DIR, "privacy.html")
+    except FileNotFoundError:
+        return json_response({"success": False, "error": "privacy.html not found — upload it alongside server_v16.py"}, 404)
+
+
 @app.route("/backoffice-9f3m")
 @app.route("/backoffice-9f3m/")
 @limiter.limit("15 per minute")
@@ -1371,6 +1389,8 @@ def get_site_settings():
             "TIKTOK_LINK": s.get("tiktok_link") or "",
             "FOOTER_DESC": s.get("footer_desc") or "",
             "COPYRIGHT": s.get("copyright") or "",
+            "KHQR_LOGO_URL": s.get("khqr_logo_url") or "",
+            "ABA_LOGO_URL": s.get("aba_logo_url") or "",
         },
     })
 
@@ -1402,6 +1422,8 @@ def admin_settings():
         "tiktok_link": body.get("tiktok_link"),
         "footer_desc": body.get("footer_desc"),
         "copyright": body.get("copyright"),
+        "khqr_logo_url": body.get("khqr_logo_url"),
+        "aba_logo_url": body.get("aba_logo_url"),
     }
 
     def _mutate(d):

@@ -199,11 +199,12 @@ button{font-family:inherit; cursor:pointer; border:none; background:none;}
   border:1.5px solid var(--ink); color:var(--ink); font-size:12px; font-weight:700;}
 .id-chip svg{width:12px; height:12px;}
 
-.product-grid{display:grid; grid-template-columns:1fr 1fr; gap:12px; padding:0 16px 18px;}
+.product-grid{display:grid; grid-template-columns:1fr 1fr; gap:16px 12px; padding:0 16px 18px;}
 @keyframes stampPop{0%{opacity:0; transform:scale(.3) rotate(-20deg);} 60%{opacity:1; transform:scale(1.15) rotate(4deg);} 100%{opacity:1; transform:scale(1) rotate(0);}}
 .product-card{
-  padding:12px 12px 14px; text-align:center; position:relative;
+  padding:14px 12px 0; text-align:center; position:relative; overflow:visible;
   animation:cardIn .35s cubic-bezier(.2,.8,.2,1) both;
+  display:flex; flex-direction:column;
 }
 .product-card:nth-child(1){animation-delay:.02s;} .product-card:nth-child(2){animation-delay:.06s;}
 .product-card:nth-child(3){animation-delay:.1s;} .product-card:nth-child(4){animation-delay:.14s;}
@@ -215,17 +216,28 @@ button{font-family:inherit; cursor:pointer; border:none; background:none;}
   background:var(--bakong); color:#fff; font-size:12px; font-weight:700; display:flex; align-items:center;
   justify-content:center; border:1.5px solid var(--ink); box-shadow:1.5px 1.5px 0 var(--ink);
 }
-.product-card .badge{position:absolute; top:-8px; left:10px; font-size:10px; background:var(--stamp); color:#fff;
-  padding:3px 8px 3px 6px; border-radius:20px; font-weight:700; display:flex; align-items:center; gap:4px; border:1.5px solid var(--ink);}
-.product-card .badge::before{content:""; width:5px; height:5px; border-radius:50%; background:#fff; flex-shrink:0;}
+/* popular badge: a small folded ribbon flag instead of a plain pill */
+.product-card .badge{position:absolute; top:-6px; left:12px; font-size:9.5px; background:var(--stamp); color:#fff;
+  padding:4px 8px 6px 7px; font-weight:700; display:flex; align-items:center; gap:3px; border:1.5px solid var(--ink);
+  border-radius:2px 2px 2px 0; transform:rotate(-3deg); z-index:2;
+  clip-path:polygon(0 0, 100% 0, 100% 100%, 50% 82%, 0 100%);}
+.product-card .badge svg{width:9px; height:9px;}
 .product-card .pmedia{width:52px; height:52px; margin:0 auto 8px; border-radius:50%; overflow:hidden;
   background:var(--paper-2); border:1.5px dashed var(--line-strong);
-  display:flex; align-items:center; justify-content:center;}
+  display:flex; align-items:center; justify-content:center; flex-shrink:0;}
 .product-card .pmedia img{width:100%; height:100%; object-fit:cover; display:block;}
 .product-card .pmedia .fallback{color:var(--stamp); opacity:.85;}
 .product-card .pmedia .fallback svg{width:20px; height:20px;}
-.product-card .pname{font-size:13px; font-weight:600; margin-bottom:7px; line-height:1.25;
+.product-card .pname{font-size:13px; font-weight:600; line-height:1.25; flex:1;
   min-height:2.5em; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden;}
+/* price stub: torn off the bottom of the card, like a receipt price tag */
+.product-card .pstub{position:relative; margin:10px -12px 0; padding:9px 12px 11px; border-top:2px dashed var(--line-strong);
+  background:var(--paper-2);}
+.product-card .pstub::before, .product-card .pstub::after{
+  content:""; position:absolute; top:-8px; width:15px; height:15px; border-radius:50%;
+  background:var(--paper); border:1.5px solid var(--ink); z-index:1;
+}
+.product-card .pstub::before{left:-8px;} .product-card .pstub::after{right:-8px;}
 .product-card .pprice{font-family:'Space Mono','Kantumruy Pro',monospace; color:var(--stamp); font-weight:700; font-size:15px;}
 
 @keyframes barUp{from{opacity:0; transform:translateY(100%);} to{opacity:1; transform:translateY(0);}}
@@ -307,6 +319,16 @@ button{font-family:inherit; cursor:pointer; border:none; background:none;}
 footer{padding:30px 16px 40px; text-align:center; color:var(--muted); font-size:12px; border-top:2px dashed var(--line-strong); margin-top:12px;}
 footer .fname{color:var(--ink); font-size:20px; letter-spacing:.8px; margin-bottom:6px;}
 footer .links{display:flex; justify-content:center; gap:16px; margin:10px 0;}
+footer .links a{color:var(--ink); text-decoration:underline; font-weight:600; font-size:11.5px;}
+footer .trust-badge{display:inline-flex; align-items:center; gap:6px; margin:10px auto 4px; padding:6px 14px;
+  border:1.5px dashed var(--line-strong); border-radius:20px; font-size:11px; font-weight:700; color:var(--paid);}
+footer .trust-badge svg{width:13px; height:13px; flex-shrink:0;}
+footer .accept-label{font-size:10px; text-transform:uppercase; letter-spacing:1.2px; color:var(--muted); font-weight:700; margin:18px 0 8px;}
+footer .accept-row{display:flex; justify-content:center; gap:8px; flex-wrap:wrap; margin-bottom:4px;}
+footer .accept-badge{font-family:'Space Mono',monospace; font-size:11px; font-weight:700; color:var(--ink);
+  border:1.5px solid var(--ink); border-radius:3px; padding:5px 10px; background:var(--card);
+  display:inline-flex; align-items:center; gap:5px;}
+footer .accept-badge svg, footer .accept-badge img{width:14px; height:14px; flex-shrink:0; object-fit:contain;}
 
 .skeleton{background:linear-gradient(90deg, var(--paper) 25%, var(--paper-2) 37%, var(--paper) 63%); background-size:400% 100%; animation:shimmer 1.4s ease infinite;
   border:1.5px dashed var(--line-strong);}
@@ -864,10 +886,33 @@ function renderTopbarAndFooter(){
     ft.innerHTML = `
       <div class="fname">${esc(s.FOOTER_NAME || "PVH TOPUP")}</div>
       <div>${esc(s.FOOTER_DESC || "")}</div>
+      <div class="trust-badge">
+        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2 4 5v6c0 5 3.4 9 8 11 4.6-2 8-6 8-11V5l-8-3z"/><path d="m9 12 2 2 4-4"/></svg>
+        ទូទាត់សុវត្ថិភាព · ស្កេន KHQR ភ្លាមៗ
+      </div>
       <div class="social-row">
         ${s.ADMIN_TELEGRAM_LINK ? `<a class="social-link telegram" href="${esc(s.ADMIN_TELEGRAM_LINK)}" target="_blank" aria-label="Telegram">${ICONS.telegram}</a>` : ""}
         ${s.FACEBOOK_LINK ? `<a class="social-link facebook" href="${esc(s.FACEBOOK_LINK)}" target="_blank" aria-label="Facebook">${ICONS.facebook}</a>` : ""}
         ${s.TIKTOK_LINK ? `<a class="social-link tiktok" href="${esc(s.TIKTOK_LINK)}" target="_blank" aria-label="TikTok">${ICONS.tiktok}</a>` : ""}
+      </div>
+      <div class="accept-label">យើងទទួលទូទាត់</div>
+      <div class="accept-row">
+        <span class="accept-badge">
+          ${s.KHQR_LOGO_URL
+            ? `<img src="${esc(s.KHQR_LOGO_URL)}" alt="KHQR">`
+            : `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><path d="M14 14h3v3h-3zM19 14h2v2h-2zM14 19h2v2h-2zM19 19h2v2h-2z"/></svg>`}
+          KHQR
+        </span>
+        <span class="accept-badge">
+          ${s.ABA_LOGO_URL
+            ? `<img src="${esc(s.ABA_LOGO_URL)}" alt="ABA">`
+            : `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg>`}
+          ABA PayWay
+        </span>
+      </div>
+      <div class="links">
+        <a href="/terms">លក្ខខណ្ឌប្រើប្រាស់</a>
+        <a href="/privacy">គោលការណ៍ឯកជនភាព</a>
       </div>
       <div>${esc(s.COPYRIGHT || "")}</div>
     `;
@@ -921,7 +966,7 @@ function renderGame(){
         ${p.image_url ? `<img src="${esc(p.image_url)}" alt="" loading="lazy">` : `<span class="fallback">${ICONS.diamond}</span>`}
       </div>
       <div class="pname">${esc(p.name)}</div>
-      <div class="pprice">$${Number(p.price).toFixed(2)}</div>
+      <div class="pstub"><div class="pprice">$${Number(p.price).toFixed(2)}</div></div>
     </div>`).join("") : `<div class="empty-products">${ICONS.image} មិនទាន់មាន package សម្រាប់ហ្គេមនេះទេ — សូមទាក់ទង admin</div>`);
 
   const recent = getRecentIds(g.code).filter(e => e.playerId !== state.playerId);
