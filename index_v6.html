@@ -312,7 +312,6 @@ button{font-family:inherit; cursor:pointer; border:none; background:none;}
 .sheet.khqr-card .post-pay-actions{margin:10px 16px 4px;}
 .sheet.khqr-card .copy-receipt-btn{background:linear-gradient(135deg,#8b5cf6,#ec4899);}
 .pay-url-btn{display:none;}
-.pay-amount,.pay-timer,.sheet h3,.sheet .sub{/* legacy hidden when using khqr-card */}
 
 
 .receipt{margin:14px 0; padding:12px; background:var(--bg2); border-radius:12px; font-size:12.5px; border:.5px solid var(--line);}
@@ -372,6 +371,78 @@ footer .links a{color:var(--bakong-bright); font-weight:600; font-size:11.5px;}
 }
 .tabbar button.on, .tabbar a.on{color:var(--acc);}
 .tabbar .ic svg{width:20px; height:20px;}
+
+
+/* generic dark bottom sheet (orders / track) */
+.sheet:not(.khqr-card){
+  width:100%; max-width:420px; max-height:85vh; overflow-y:auto;
+  background:var(--card); border:.5px solid var(--line);
+  border-radius:20px 20px 0 0; padding:18px 16px calc(16px + env(safe-area-inset-bottom));
+  box-shadow:var(--shadow-lg); color:var(--ink);
+}
+.sheet:not(.khqr-card) h3{
+  margin:0 0 4px; font-size:18px; font-weight:800; color:#fff; text-align:left;
+  display:block !important;
+}
+.sheet:not(.khqr-card) .sub{
+  margin:0 0 14px; font-size:12.5px; color:var(--muted); font-weight:600;
+  display:block !important; text-align:left;
+}
+.sheet:not(.khqr-card) .id-row{align-items:stretch; gap:8px;}
+.sheet:not(.khqr-card) .id-row input{
+  background:var(--bg); color:#fff; border:.5px solid var(--line-strong);
+}
+.sheet:not(.khqr-card) .btn-primary{
+  flex:0 0 auto; width:auto; min-width:96px; padding:12px 16px; min-height:46px;
+  font-size:13px; align-self:stretch;
+}
+.sheet:not(.khqr-card) .close-btn{
+  width:100%; margin:12px 0 0; background:var(--bg2); color:var(--ink-soft);
+  border:.5px solid var(--line);
+}
+.sheet:not(.khqr-card) .receipt{
+  margin-top:12px; background:var(--bg2); border:.5px solid var(--line); border-radius:12px;
+  padding:12px; font-size:12.5px;
+}
+.sheet:not(.khqr-card) .receipt-row .l{color:var(--muted);}
+.sheet:not(.khqr-card) .receipt-row .v{color:#e2e8f0; font-weight:650;}
+.sheet:not(.khqr-card) .receipt-total{color:#fff; border-top-color:var(--line-strong);}
+.sheet:not(.khqr-card) .receipt-total .v{color:var(--bakong-bright);}
+.sheet:not(.khqr-card) .empty-products{
+  margin-top:12px; border-style:dashed; background:var(--bg2);
+}
+
+/* 3-col packages on wider phones */
+@media (min-width:380px){
+  .product-grid{grid-template-columns:repeat(3,1fr); gap:8px;}
+  .product-card .pname{font-size:11.5px;}
+  .product-card .pprice{font-size:13px;}
+}
+
+/* topbar compact on narrow screens */
+@media (max-width:380px){
+  .topbar .contact-btn .btn-label{display:none;}
+  .topbar .contact-btn{padding:8px 10px; min-width:40px; justify-content:center;}
+}
+
+/* game detail header with art */
+.detail-header .gart{
+  width:44px; height:44px; border-radius:12px; object-fit:cover;
+  background:var(--card-2); flex:none; box-shadow:0 2px 8px rgba(0,0,0,.3);
+}
+.detail-header .gmeta{min-width:0; flex:1;}
+.detail-header .gsub{font-size:11.5px; color:var(--muted); font-weight:600; margin-top:2px;}
+
+/* hero empty polish */
+.hero-empty{
+  display:flex; flex-direction:column; align-items:center; justify-content:center; gap:8px;
+  height:100%; color:var(--muted); font-size:13px;
+  background:linear-gradient(145deg, var(--card), var(--card-2));
+}
+.hero-empty .big{font-size:28px; opacity:.5;}
+
+/* empty states */
+.empty-products .big-ic{font-size:28px; margin-bottom:6px; opacity:.7; display:block;}
 
 .toast{position:fixed; bottom:calc(var(--tab-h) + 20px); left:50%; transform:translateX(-50%) translateY(10px);
   background:var(--card-2); color:#fff; border:.5px solid var(--line);
@@ -634,14 +705,15 @@ function openMyOrders(){
   const prefill = lastUsedPlayerIdAnyGame();
   root.innerHTML = `
     <div class="sheet">
-      <h3>ការបញ្ជាទិញរបស់ខ្ញុំ</h3>
-      <div class="sub">វាយ Player ID ដើម្បីមើលប្រវត្តិទិញ</div>
+      <h3>ការបញ្ជាទិញ</h3>
+      <div class="sub">វាយ Player ID ដើម្បីមើលប្រវត្តិ និង track ការដឹកជញ្ជូន</div>
       <div class="id-row">
         <div class="id-field">
           <span class="field-icon">${ICONS.user}</span>
-          <input type="text" inputmode="numeric" id="ordersSearchInput" placeholder="Player ID" value="${esc(prefill ? prefill.playerId : "")}">
+          <input type="text" inputmode="numeric" id="ordersSearchInput" placeholder="Player ID" value="${esc(prefill ? prefill.playerId : "")}"
+            onkeydown="if(event.key==='Enter')__app.searchMyOrders()">
         </div>
-        <button class="btn-primary" style="padding:11px 18px" onclick="__app.searchMyOrders()">ស្វែងរក</button>
+        <button class="btn-primary" onclick="__app.searchMyOrders()">ស្វែងរក</button>
       </div>
       <div id="ordersResult"></div>
       <button class="close-btn" onclick="__app.closeMyOrders()">បិទ</button>
@@ -660,8 +732,8 @@ async function searchMyOrders(){
   if(!userId){ toast("សូមវាយ Player ID", true); return; }
   resultEl.innerHTML = `<div class="skeleton" style="height:60px;border-radius:10px;margin-top:12px;"></div>`;
   const r = await api("my-orders?userId=" + encodeURIComponent(userId));
-  if(!r.success){ resultEl.innerHTML = `<div class="empty-products">${ICONS.cross} មិនអាចផ្ទុកបានទេ</div>`; return; }
-  if(!r.orders.length){ resultEl.innerHTML = `<div class="empty-products">${ICONS.image} មិនទាន់មានការបញ្ជាទិញសម្រាប់ ID នេះទេ</div>`; return; }
+  if(!r.success){ resultEl.innerHTML = `<div class="empty-products"><span class="big-ic">⚠️</span>មិនអាចផ្ទុកបានទេ</div>`; return; }
+  if(!r.orders.length){ resultEl.innerHTML = `<div class="empty-products"><span class="big-ic">🧾</span>មិនទាន់មានការបញ្ជាទិញសម្រាប់ ID នេះទេ</div>`; return; }
   resultEl.innerHTML = r.orders.map(o => `
     <div class="receipt" style="margin-top:12px">
       <div class="receipt-row"><span class="l">Trx ID</span><span class="v">${esc(o.trx_id)}</span></div>
@@ -1011,8 +1083,8 @@ function renderTopbarAndFooter(){
       ${s.LOGO_URL ? `<img class="logo" src="${esc(s.LOGO_URL)}" alt="logo">` : ""}
       <div class="sitename">${esc(s.SITE_NAME || "PVH TOPUP")}</div>
       <div class="spacer"></div>
-      <button class="contact-btn" onclick="__app.openMyOrders()">${ICONS.history} ការបញ្ជាទិញ</button>
-      ${s.ADMIN_TELEGRAM_LINK ? `<a class="contact-btn" href="${esc(s.ADMIN_TELEGRAM_LINK)}" target="_blank">${ICONS.chat} ជំនួយ</a>` : ""}
+      <button class="contact-btn" onclick="__app.openMyOrders()" aria-label="Orders">${ICONS.history}<span class="btn-label">Orders</span></button>
+      ${s.ADMIN_TELEGRAM_LINK ? `<a class="contact-btn" href="${esc(s.ADMIN_TELEGRAM_LINK)}" target="_blank" aria-label="Help">${ICONS.chat}<span class="btn-label">Help</span></a>` : ""}
     `;
   }
   const ft = $("#footer");
@@ -1060,7 +1132,7 @@ function renderHeroAndPromo(){
         ${mainSlides.map(b => `<div class="hero-slide"><img src="${esc(b.image_url)}" alt=""></div>`).join("")}
       </div>
       ${mainSlides.length>1 ? `<div class="hero-dots">${mainSlides.map((_,i)=>`<span class="${i===0?'active':''}"></span>`).join("")}</div>` : ""}
-    </div>` : `<div class="hero"><div class="hero-empty">${ICONS.image} មិនទាន់មាន banner</div></div>`;
+    </div>` : `<div class="hero"><div class="hero-empty"><span class="big">🎮</span><div>PVH TOPUP</div><div style="font-size:11px;opacity:.7">Game top-up · KHQR</div></div></div>`;
   const promo = promoSlides.length ? `
     <div class="promo-strip">${promoSlides.map(b=>`<img src="${esc(b.image_url)}" alt="">`).join("")}</div>` : "";
   return hero + promo;
@@ -1099,7 +1171,7 @@ function renderHome(){
           <div class="info">
             <div class="gname">${esc(g.name)}</div>
           </div>
-        </div>`).join("") : (state.games.length ? `<div class="empty-products" style="grid-column:1/-1">រកមិនឃើញហ្គេម</div>` : `<div class="skeleton" style="height:100px;border-radius:16px;"></div><div class="skeleton" style="height:100px;border-radius:16px;"></div><div class="skeleton" style="height:100px;border-radius:16px;"></div>`)}
+        </div>`).join("") : (state.games.length ? `<div class="empty-products" style="grid-column:1/-1"><span class="big-ic">🔍</span>រកមិនឃើញហ្គេម</div>` : `<div class="skeleton" style="height:100px;border-radius:16px;"></div><div class="skeleton" style="height:100px;border-radius:16px;"></div><div class="skeleton" style="height:100px;border-radius:16px;"></div>`)}
     </div>
   `;
 }
@@ -1117,7 +1189,7 @@ function renderGame(){
       </div>
       <div class="pname">${esc(p.name)}</div>
       <div class="pstub"><div class="pprice">$${Number(p.price).toFixed(2)}</div></div>
-    </div>`).join("") : `<div class="empty-products">${ICONS.image} មិនទាន់មាន package សម្រាប់ហ្គេមនេះទេ — សូមទាក់ទង admin</div>`);
+    </div>`).join("") : `<div class="empty-products"><span class="big-ic">📦</span>មិនទាន់មាន package សម្រាប់ហ្គេមនេះទេ<br><span style="font-size:12px;opacity:.8">សូមទាក់ទង admin</span></div>`);
 
   const recent = getRecentIds(g.code).filter(e => e.playerId !== state.playerId);
   const chipsHtml = recent.length ? `
@@ -1136,7 +1208,11 @@ function renderGame(){
   return `
     <div class="detail-header">
       <div class="back-btn" onclick="__app.goHome()">${ICONS.chevronLeft}</div>
-      <div class="gname">${esc(g.name)}</div>
+      ${g.image_url ? `<img class="gart" src="${esc(g.image_url)}" alt="">` : ""}
+      <div class="gmeta">
+        <div class="gname">${esc(g.name)}</div>
+        <div class="gsub">${g.fulfillment_type === "giftcard" ? "Gift Card" : (isTelegramGame(g) ? "Telegram" : "Top-up · KHQR")}</div>
+      </div>
     </div>
     ${isGiftcard ? `
     <div class="id-form">

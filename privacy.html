@@ -4,29 +4,27 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>គោលការណ៍ឯកជនភាព — PVH TOPUP</title>
-<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Archivo:wght@400;600;700&family=Kantumruy+Pro:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Kantumruy+Pro:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
 :root{
-  --paper:#F6F1E4; --card:#FFFDF6; --ink:#1C1B19; --ink-soft:#6B6558;
-  --stamp:#C0392B; --bakong:#1E5AA8; --line:#D3CBB4; --line-strong:#B9AF90;
+  --bg:#0b0e14; --card:#181c27; --ink:#f0f2f7; --ink-soft:#8b93a7;
+  --acc:#8b5cf6; --stamp:#ef4444; --line:rgba(255,255,255,.08); --line-strong:rgba(255,255,255,.14);
 }
 *{box-sizing:border-box;}
-body{margin:0; background:var(--paper); color:var(--ink); font-family:'Archivo','Kantumruy Pro',sans-serif;
-  line-height:1.6; padding-bottom:40px;}
-.topbar{position:sticky; top:0; z-index:10; background:var(--paper); border-bottom:2px dashed var(--line-strong);
-  padding:14px 16px; display:flex; align-items:center; gap:10px;}
-.topbar a{color:var(--ink); text-decoration:none; font-size:14px; font-weight:700; display:flex; align-items:center; gap:5px;}
-h1{font-family:'Bebas Neue','Kantumruy Pro',sans-serif; font-weight:400; font-size:28px; letter-spacing:.6px;
-  margin:24px 16px 4px;}
+body{margin:0; background:var(--bg); color:var(--ink); font-family:'Plus Jakarta Sans','Kantumruy Pro',system-ui,sans-serif;
+  line-height:1.6; padding-bottom:40px; color-scheme:dark;}
+.topbar{position:sticky; top:0; z-index:10; background:rgba(11,14,20,.92); backdrop-filter:blur(12px);
+  border-bottom:.5px solid var(--line); padding:14px 16px; display:flex; align-items:center; gap:10px;}
+.topbar a{color:var(--acc); text-decoration:none; font-size:14px; font-weight:700; display:flex; align-items:center; gap:5px;}
+h1{font-weight:800; font-size:24px; letter-spacing:-.02em; margin:24px 16px 4px; color:#fff;}
 .updated{color:var(--ink-soft); font-size:12px; margin:0 16px 20px;}
-.card{background:var(--card); border:1.5px solid var(--ink); border-radius:4px; margin:0 16px 16px; padding:18px 18px 20px;
-  box-shadow:3px 3px 0 var(--line-strong);}
-h2{font-family:'Bebas Neue','Kantumruy Pro',sans-serif; font-weight:400; font-size:19px; letter-spacing:.4px;
-  margin:0 0 8px; color:var(--bakong);}
-p{margin:0 0 10px; font-size:14px;}
-ul{margin:0 0 10px; padding-left:20px; font-size:14px;}
+.card{background:var(--card); border:.5px solid var(--line); border-radius:14px; margin:0 16px 14px; padding:18px 18px 20px;
+  box-shadow:0 4px 16px rgba(0,0,0,.25);}
+h2{font-weight:750; font-size:16px; letter-spacing:-.01em; margin:0 0 8px; color:var(--acc);}
+p{margin:0 0 10px; font-size:14px; color:#e2e8f0;}
+ul{margin:0 0 10px; padding-left:20px; font-size:14px; color:#e2e8f0;}
 li{margin-bottom:5px;}
-.disclaimer{margin:24px 16px 0; padding:14px 16px; border:1.5px dashed var(--stamp); border-radius:4px;
+.disclaimer{margin:24px 16px 0; padding:14px 16px; border:1px dashed rgba(239,68,68,.4); border-radius:12px;
   font-size:12px; color:var(--ink-soft); background:var(--card);}
 </style>
 </head>
@@ -42,7 +40,7 @@ li{margin-bottom:5px;}
     <li>ព័ត៌មានប្រតិបត្តិការ (ចំនួនទឹកប្រាក់, ពេលវេលា, ស្ថានភាព)</li>
     <li>Telegram username/ID ក្នុងករណីអ្នកទាក់ទងក្រុមការងារសម្រាប់ជំនួយ</li>
   </ul>
-  <p>យើង**មិន**ស្នើសុំ ឬផ្ទុកព័ត៌មានលេខអត្តសញ្ញាណប័ណ្ណ ឬព័ត៌មានធនាគារ/កាតឥណទានផ្ទាល់នោះទេ — ការទូទាត់ទាំងអស់ធ្វើឡើងតាមរយៈ KHQR/ABA PayWay ដោយផ្ទាល់ជាមួយធនាគាររបស់អ្នក។</p>
+  <p>យើង**មិន**ស្នើសុំ ឬផ្ទុកព័ត៌មានលេខអត្តសញ្ញាណប័ណ្ណ ឬព័ត៌មានធនាគារ/កាតឥណទានផ្ទាល់នោះទេ — ការទូទាត់ទាំងអស់ធ្វើឡើងតាមរយៈ KHQR/Bakong KHQR ដោយផ្ទាល់ជាមួយធនាគាររបស់អ្នក។</p>
 </div>
 
 <div class="card">
@@ -58,7 +56,7 @@ li{margin-bottom:5px;}
   <h2>3. ភាគីទីបី</h2>
   <p>ដើម្បីអនុវត្តសេវាកម្ម យើងចែករំលែកព័ត៌មានចាំបាច់អប្បបរមាជាមួយ៖</p>
   <ul>
-    <li><b>ABA PayWay</b> — សម្រាប់ដំណើរការទូទាត់ KHQR</li>
+    <li><b>Bakong KHQR</b> — សម្រាប់ដំណើរការទូទាត់ KHQR</li>
     <li><b>Khmer TopUp</b> — សម្រាប់ដឹកជញ្ជូន Diamond/Coin ចូលគណនីហ្គេមផ្ទាល់</li>
   </ul>
   <p>យើងមិនលក់ ឬចែករំលែកព័ត៌មានរបស់អ្នកទៅភាគីផ្សេងទៀតសម្រាប់គោលបំណងផ្សាយពាណិជ្ជកម្មទេ។</p>
