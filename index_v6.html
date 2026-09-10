@@ -238,29 +238,82 @@ button{font-family:inherit; cursor:pointer; border:none; background:none;}
 .btn-primary:not(:disabled):active{transform:scale(.98);}
 
 /* payment sheet */
-.sheet-backdrop{position:fixed; inset:0; background:rgba(0,0,0,.7); z-index:100;
-  display:flex; align-items:flex-end; justify-content:center;}
-.sheet{width:100%; max-width:420px; background:var(--card); border:.5px solid var(--line);
-  border-radius:20px 20px 0 0; padding:22px 16px calc(18px + env(safe-area-inset-bottom));
-  box-shadow:var(--shadow-lg);}
-.sheet h3{margin:0 0 4px; font-size:18px; text-align:center; color:#fff; font-weight:800;}
-.sheet .sub{text-align:center; color:var(--bakong-bright); font-size:12.5px; font-weight:700; margin-bottom:14px;
+/* payment sheet — ABA/Bakong KHQR card style (like sazztopup) */
+.sheet-backdrop{position:fixed; inset:0; background:rgba(0,0,0,.72); z-index:100;
+  display:flex; align-items:flex-end; justify-content:center; padding:0;}
+.sheet.khqr-card{
+  width:100%; max-width:420px;
+  background:#fff; color:#1a1d26;
+  border:0; border-radius:18px 18px 0 0;
+  padding:0 0 calc(14px + env(safe-area-inset-bottom));
+  box-shadow:0 -8px 40px rgba(0,0,0,.45);
+  overflow:hidden;
+}
+.khqr-head{
+  background:#E31C23;
+  padding:16px 16px 18px; text-align:center; position:relative;
+  clip-path: polygon(0 0, 100% 0, 100% 78%, 0 100%);
+}
+.khqr-head .khqr-logo{
+  font-family:var(--fd); font-weight:800; font-size:22px; letter-spacing:.04em;
+  color:#fff; display:inline-flex; align-items:center; gap:2px;
+}
+.khqr-head .khqr-logo span{opacity:.95;}
+.khqr-body{padding:8px 20px 8px; text-align:center;}
+.khqr-meta{display:flex; justify-content:space-between; align-items:center;
+  padding:4px 0 10px; font-size:13px; font-weight:700; color:#4b5563;}
+.khqr-meta .tag{color:#1f2937;}
+.khqr-meta .timer{display:inline-flex; align-items:center; gap:6px; color:#6b7280; font-variant-numeric:tabular-nums;}
+.khqr-meta .timer .dot{
+  width:14px; height:14px; border:2px solid #93c5fd; border-top-color:#3b82f6;
+  border-radius:50%; animation:spin 0.8s linear infinite;
+}
+@keyframes spin{to{transform:rotate(360deg);}}
+.khqr-merchant{font-size:13px; color:#9ca3af; font-weight:600; letter-spacing:.04em;
+  text-transform:uppercase; margin:4px 0 2px;}
+.khqr-amount{font-family:var(--fd); font-size:32px; font-weight:800; color:#111827; margin:0 0 4px;}
+.khqr-amount small{font-size:14px; font-weight:700; color:#6b7280; margin-left:4px;}
+.khqr-divider{border:0; border-top:1px dashed #e5e7eb; margin:12px 0 16px;}
+.qr-frame{
+  background:#fff; padding:0; margin:0 auto 14px; width:min(220px,68vw);
+  border-radius:0; position:relative; display:inline-block;
+}
+.qr-frame img, .qr-frame canvas{width:100%; height:auto; display:block; border-radius:0;}
+.qr-frame .qr-dollar{
+  position:absolute; left:50%; top:50%; transform:translate(-50%,-50%);
+  width:36px; height:36px; border-radius:50%; background:#fff;
+  border:2px solid #111; display:flex; align-items:center; justify-content:center;
+  font-weight:800; font-size:18px; color:#111; pointer-events:none;
+  box-shadow:0 0 0 3px #fff;
+}
+.khqr-scan{font-size:16px; font-weight:800; color:#1e3a5f; margin:6px 0 4px;}
+.khqr-or{font-size:12px; color:#9ca3af; margin:2px 0 6px;}
+.khqr-dl{
+  display:inline-flex; align-items:center; gap:6px;
+  color:#22d3ee; font-size:14px; font-weight:700; background:none; border:0;
+  padding:8px 12px; cursor:pointer; font-family:var(--fd);
+}
+.khqr-dl:active{opacity:.7;}
+.khqr-hint{font-size:12px; color:#9ca3af; line-height:1.45; margin:4px 16px 12px; text-align:center;}
+.pay-status{text-align:center; margin:0 16px 10px; padding:11px; border-radius:10px; font-size:13px; font-weight:700;
   display:flex; align-items:center; justify-content:center; gap:6px;}
-.sheet .sub::before{content:""; width:7px; height:7px; border-radius:50%; background:var(--acc);
-  box-shadow:0 0 8px var(--bakong-glow);}
-.qr-frame{background:#fff; padding:12px; margin:0 auto 12px; width:min(210px,66vw); border-radius:14px;}
-.qr-frame canvas, .qr-frame img{width:100%; height:auto; display:block; border-radius:6px;}
-.pay-url-btn{display:block; text-align:center; margin:0 auto 12px; color:var(--bakong-bright); font-size:13px; font-weight:700; text-decoration:underline;}
-.pay-amount{text-align:center; font-family:var(--fd); font-size:26px; font-weight:800; color:#fff; margin-bottom:4px;}
-.pay-timer{text-align:center; font-size:12.5px; color:var(--muted); margin-bottom:12px; font-weight:600;}
-.pay-status{text-align:center; padding:11px; border-radius:10px; font-size:13px; font-weight:700;
-  display:flex; align-items:center; justify-content:center; gap:6px;}
-.pay-status.waiting{background:var(--bg2); color:var(--muted);}
-.pay-status.success{background:var(--paid-soft); color:var(--paid);}
-.pay-status.processing{background:var(--acc-soft); color:var(--bakong-bright);}
-.pay-status.failed{background:rgba(239,68,68,.12); color:var(--stamp);}
-.close-btn{width:100%; margin-top:12px; padding:14px; min-height:46px; border-radius:12px;
-  background:var(--bg2); color:var(--ink-soft); font-weight:700; font-size:14px; border:.5px solid var(--line);}
+.pay-status.waiting{background:#f3f4f6; color:#6b7280;}
+.pay-status.success{background:#ecfdf5; color:#059669;}
+.pay-status.processing{background:#eff6ff; color:#2563eb;}
+.pay-status.failed{background:#fef2f2; color:#dc2626;}
+.close-btn{width:calc(100% - 32px); margin:4px 16px 8px; padding:13px; min-height:46px; border-radius:12px;
+  background:#f3f4f6; color:#4b5563; font-weight:700; font-size:14px; border:0;}
+.close-btn:active{background:#e5e7eb;}
+.sheet.khqr-card .receipt{margin:10px 16px; background:#f9fafb; border:1px solid #e5e7eb; color:#111;}
+.sheet.khqr-card .receipt-row .l{color:#6b7280;}
+.sheet.khqr-card .receipt-row .v{color:#111;}
+.sheet.khqr-card .receipt-total{color:#111;}
+.sheet.khqr-card .receipt-total .v{color:#7c3aed;}
+.sheet.khqr-card .post-pay-actions{margin:10px 16px 4px;}
+.sheet.khqr-card .copy-receipt-btn{background:linear-gradient(135deg,#8b5cf6,#ec4899);}
+.pay-url-btn{display:none;}
+.pay-amount,.pay-timer,.sheet h3,.sheet .sub{/* legacy hidden when using khqr-card */}
+
 
 .receipt{margin:14px 0; padding:12px; background:var(--bg2); border-radius:12px; font-size:12.5px; border:.5px solid var(--line);}
 .receipt-row{display:flex; justify-content:space-between; padding:5px 0; border-bottom:1px dashed var(--line);}
@@ -686,17 +739,32 @@ async function buyNow(){
 
 function openPaymentSheet(trxId, qrImage, payUrl, amount){
   let secondsLeft = PAY_TIMEOUT_SECONDS;
+  const merchant = (state.settings && (state.settings.SITE_NAME || state.settings.FOOTER_NAME)) || "PVH TOPUP";
   const root = document.createElement("div");
   root.className = "sheet-backdrop";
   root.id = "paySheet";
   root.innerHTML = `
-    <div class="sheet">
-      <h3>ស្កេន QR ដើម្បីទូទាត់</h3>
-      <div class="sub">Bakong KHQR · ធនាគារណាក៏បាន</div>
-      <div class="qr-frame" id="qrFrame">${qrImage ? `<img src="${qrImage}" alt="Bakong KHQR QR">` : ""}</div>
-      ${payUrl ? `<a class="pay-url-btn" href="${payUrl}" target="_blank" rel="noopener">បើកទំព័រទូទាត់</a>` : ""}
-      <div class="pay-amount">$${amount.toFixed(2)}</div>
-      <div class="pay-timer" id="payTimer">នៅសល់ 05:00</div>
+    <div class="sheet khqr-card">
+      <div class="khqr-head">
+        <div class="khqr-logo">KHQR</div>
+      </div>
+      <div class="khqr-body">
+        <div class="khqr-meta">
+          <span class="tag">Bakong KHQR</span>
+          <span class="timer"><span class="dot"></span><span id="payTimer">05:00</span></span>
+        </div>
+        <div class="khqr-merchant">${esc(merchant)}</div>
+        <div class="khqr-amount">${amount.toFixed(2)} <small>USD</small></div>
+        <hr class="khqr-divider">
+        <div class="qr-frame" id="qrFrame">
+          ${qrImage ? `<img src="${qrImage}" alt="KHQR">` : ""}
+          <div class="qr-dollar">$</div>
+        </div>
+        <div class="khqr-scan">Scan to pay</div>
+        <div class="khqr-or">or</div>
+        <button type="button" class="khqr-dl" id="dlQrBtn">⬇ Download QR</button>
+        <p class="khqr-hint">and upload to a Mobile Banking app supporting KHQR</p>
+      </div>
       <div class="pay-status waiting" id="payStatus">កំពុងរង់ចាំការទូទាត់...</div>
       <button class="close-btn" id="closeSheetBtn">បិទ</button>
     </div>`;
@@ -704,12 +772,27 @@ function openPaymentSheet(trxId, qrImage, payUrl, amount){
 
   $("#closeSheetBtn").onclick = () => closePaymentSheet(trxId, true);
 
+  const dlBtn = $("#dlQrBtn");
+  if(dlBtn && qrImage){
+    dlBtn.onclick = () => {
+      try{
+        const a = document.createElement("a");
+        a.href = qrImage;
+        a.download = "khqr-" + trxId + ".png";
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        toast("បានទាញ QR");
+      }catch(e){ toast("មិនអាចទាញ QR បានទេ", true); }
+    };
+  }
+
   countdownTimer = setInterval(() => {
     secondsLeft--;
-    const m = String(Math.floor(secondsLeft/60)).padStart(2,"0");
-    const s = String(secondsLeft%60).padStart(2,"0");
+    const mm = String(Math.floor(secondsLeft/60)).padStart(2,"0");
+    const ss = String(secondsLeft%60).padStart(2,"0");
     const timerEl = $("#payTimer");
-    if(timerEl) timerEl.textContent = `នៅសល់ ${m}:${s}`;
+    if(timerEl) timerEl.textContent = mm + ":" + ss;
     if(secondsLeft <= 0){
       clearInterval(countdownTimer);
       api("expire-payment", {method:"POST", body:{trx_id: trxId}});
