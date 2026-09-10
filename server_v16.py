@@ -10,9 +10,9 @@ Auto top-up is now wired to the Khmer TopUp reseller API
 (https://khmer-topup.com/api/v1) instead of FazerCards:
 
   - Auto CHECK ID   -> GET  /check          (used by /api/check-user)
-  - Auto PAYMENT    -> ABA PayWay (KHMER SYSTEM) (create-payment / check-payment)
+  - Auto PAYMENT    -> Bakong KHQR (NBC) (create-payment / check-payment)
   - Auto TOP-UP     -> POST /orders          (placed automatically the moment
-                                                ABA PayWay confirms payment)
+                                                Bakong confirms payment)
   - Delivery status -> GET  /orders/{code}   (polled by /api/check-topup-status)
   - Wallet balance  -> GET  /me              (used by /api/admin-khmertopup-balance)
   - Catalogue       -> GET  /games           (used by /api/admin-khmertopup-games)
@@ -147,122 +147,127 @@ ADMIN_OTP_CHAT_IDS = {
     cid.strip() for cid in os.environ.get("ADMIN_CHAT_IDS", "").split(",") if cid.strip()
 }
 
-# ABA PayWay (via KHMER SYSTEM — khmer-system.com) — same integration as
-# premium_shop_bot_v16.py's aba_generate_qr()/aba_check_payment().
-# Profile Key + Merchant ID from khmer-system.com/operator/profile.
-ABA_API_KEY = os.environ.get("ABA_API_KEY", "")
-ABA_MERCHANT_ID = os.environ.get("ABA_MERCHANT_ID", "")
-ABA_BASE_URL = os.environ.get("ABA_BASE_URL", "https://khmer-system.com")
-ABA_CREATE_URL = os.environ.get("ABA_CREATE_URL", f"{ABA_BASE_URL}/aba-api/generate-qr")
-ABA_CHECK_URL = os.environ.get("ABA_CHECK_URL", f"{ABA_BASE_URL}/aba-api/check-payment")
+# Bakong KHQR (National Bank of Cambodia) — direct integration via bakong-khqr.
+# Register a developer token at https://api-bakong.nbc.gov.kh/register
+# Account ID is your Bakong wallet address (e.g. yourname@wing / yourname@aclb).
+BAKONG_TOKEN = os.environ.get("BAKONG_TOKEN", "")
+BAKONG_ACCOUNT_ID = os.environ.get("BAKONG_ACCOUNT_ID", "")  # e.g. pvh@wing
+BAKONG_MERCHANT_NAME = os.environ.get("BAKONG_MERCHANT_NAME", "PVH TOPUP")
+BAKONG_MERCHANT_CITY = os.environ.get("BAKONG_MERCHANT_CITY", "Phnom Penh")
+BAKONG_PHONE = os.environ.get("BAKONG_PHONE", "")
+BAKONG_CURRENCY = os.environ.get("BAKONG_CURRENCY", "USD")  # USD or KHR
 
 # Khmer TopUp reseller API (auto ID-check + auto top-up)
 KHMERTOPUP_API_KEY = os.environ.get("KHMERTOPUP_API_KEY", "")
 KHMERTOPUP_BASE_URL = os.environ.get("KHMERTOPUP_BASE_URL", "https://khmer-topup.com/api/v1")
 
 # ---------------------------------------------------------------------------
-# ABA PayWay integration (via KHMER SYSTEM — khmer-system.com)
-# Ported from premium_shop_bot_v16.py's aba_generate_qr()/aba_check_payment().
+# Bakong KHQR integration (direct NBC Bakong API via bakong-khqr package)
 # ---------------------------------------------------------------------------
 
 _http = requests.Session()
 _http.mount("https://", requests.adapters.HTTPAdapter(
     max_retries=requests.adapters.Retry(total=2, backoff_factor=0.5)
 ))
-# khmer-system.com has a firewall/security plugin (Wordfence, Cloudflare, etc.)
-# that blocks requests without a browser-like User-Agent — the default
-# "python-requests/x.x" gets a 403 HTML page instead of JSON.
 _http.headers.update({
     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
                   "(KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
 })
 
-_last_aba_error = ""
+_last_bakong_error = ""
+_khqr_client = None
 
 
-def aba_generate_qr(amount, username, _attempt=1):
-    """POST https://khmer-system.com/aba-api/generate-qr — creates an ABA KHQR
-    payment. Returns the full response dict (payment_id, qr_image, card_image,
-    pay_url, expires_at...) on success, or None on failure (see _last_aba_error)."""
-    global _last_aba_error
-    if not ABA_API_KEY or not ABA_MERCHANT_ID:
-        _last_aba_error = "ABA_API_KEY / ABA_MERCHANT_ID is not set in the server environment"
-        print(f"[aba_generate_qr] {_last_aba_error}", flush=True)
+def _get_khqr():
+    """Lazy-init the bakong-khqr client (requires BAKONG_TOKEN)."""
+    global _khqr_client, _last_bakong_error
+    if _khqr_client is not None:
+        return _khqr_client
+    if not BAKONG_TOKEN:
+        _last_bakong_error = "BAKONG_TOKEN is not set in the server environment"
         return None
     try:
-        r = _http.post(
-            ABA_CREATE_URL,
-            json={
-                "api_key": ABA_API_KEY,
-                "merchant_id": ABA_MERCHANT_ID,
-                "username": username,
-                "amount": round(float(amount), 2),
-            },
-            headers={"Content-Type": "application/json", "Accept": "application/json"},
-            timeout=20,
-        )
+        from bakong_khqr import KHQR
+        _khqr_client = KHQR(BAKONG_TOKEN)
+        return _khqr_client
+    except Exception as e:  # noqa: BLE001
+        _last_bakong_error = f"Failed to init bakong-khqr: {type(e).__name__}: {e}"
+        print(f"[bakong] {_last_bakong_error}", flush=True)
+        return None
+
+
+def _qr_string_to_data_url(qr_string: str) -> str:
+    """Render a KHQR EMV string as a base64 PNG data URL for <img src>."""
+    import io
+    import qrcode
+    from qrcode.constants import ERROR_CORRECT_M
+
+    qr = qrcode.QRCode(version=None, error_correction=ERROR_CORRECT_M, box_size=8, border=2)
+    qr.add_data(qr_string)
+    qr.make(fit=True)
+    img = qr.make_image(fill_color="black", back_color="white")
+    buf = io.BytesIO()
+    img.save(buf, format="PNG")
+    return "data:image/png;base64," + base64.b64encode(buf.getvalue()).decode("ascii")
+
+
+def bakong_generate_qr(amount, bill_number: str):
+    """Create a dynamic Bakong KHQR for `amount` (USD by default).
+    Returns dict {md5, qr_image, qr_string} or None on failure."""
+    global _last_bakong_error
+    khqr = _get_khqr()
+    if not khqr:
+        if not _last_bakong_error:
+            _last_bakong_error = "BAKONG_TOKEN is not set"
+        print(f"[bakong_generate_qr] {_last_bakong_error}", flush=True)
+        return None
+    if not BAKONG_ACCOUNT_ID:
+        _last_bakong_error = "BAKONG_ACCOUNT_ID is not set (e.g. yourname@wing)"
+        print(f"[bakong_generate_qr] {_last_bakong_error}", flush=True)
+        return None
+    try:
+        kwargs = {
+            "merchant_name": (BAKONG_MERCHANT_NAME or "PVH TOPUP")[:25],
+            "merchant_city": (BAKONG_MERCHANT_CITY or "Phnom Penh")[:15],
+            "amount": float(amount),
+            "currency": (BAKONG_CURRENCY or "USD").upper(),
+            "store_label": "PVH TOPUP",
+            "bill_number": str(bill_number)[:25],
+            "terminal_label": "Web",
+            "static": False,
+        }
+        if BAKONG_PHONE:
+            kwargs["phone_number"] = BAKONG_PHONE
         try:
-            data = r.json()
-        except ValueError:
-            body = r.text.strip()
-            if body.lower().startswith(("<!doctype", "<html")):
-                _last_aba_error = (
-                    f"HTTP {r.status_code} — server returned an HTML page (likely a firewall/WAF "
-                    f"block, or a wrong endpoint URL) instead of JSON"
-                )
-            else:
-                _last_aba_error = f"HTTP {r.status_code} (non-JSON): {body[:300]}"
-            print(f"[aba_generate_qr] {_last_aba_error}", flush=True)
-            if r.status_code >= 500 and _attempt < 2:
-                time.sleep(1.5)
-                return aba_generate_qr(amount, username, _attempt=2)
+            qr_string = khqr.create_qr(account_id=BAKONG_ACCOUNT_ID, **kwargs)
+        except TypeError:
+            qr_string = khqr.create_qr(bank_account=BAKONG_ACCOUNT_ID, **kwargs)
+        if not qr_string or not isinstance(qr_string, str):
+            _last_bakong_error = f"create_qr returned unexpected value: {qr_string!r}"
+            print(f"[bakong_generate_qr] {_last_bakong_error}", flush=True)
             return None
-        if data.get("ok"):
-            return data
-        _last_aba_error = f"HTTP {r.status_code} [{data.get('code', '?')}]: {data.get('message') or data}"
-        print(f"[aba_generate_qr] failed: {_last_aba_error}", flush=True)
-        if r.status_code >= 500 and _attempt < 2:
-            time.sleep(1.5)
-            return aba_generate_qr(amount, username, _attempt=2)
-    except (requests.exceptions.Timeout, requests.exceptions.ConnectionError) as e:
-        _last_aba_error = f"{type(e).__name__}: {e}"
-        print(f"[aba_generate_qr] transient error: {_last_aba_error}", flush=True)
-        if _attempt < 2:
-            time.sleep(1.5)
-            return aba_generate_qr(amount, username, _attempt=2)
+        md5 = khqr.generate_md5(qr_string)
+        qr_image = _qr_string_to_data_url(qr_string)
+        return {"md5": md5, "qr_image": qr_image, "qr_string": qr_string}
     except Exception as e:  # noqa: BLE001
-        _last_aba_error = f"{type(e).__name__}: {e}"
-        print(f"[aba_generate_qr] error: {_last_aba_error}", flush=True)
-    return None
-
-
-def aba_check_payment(payment_id):
-    """Checks a payment's status by payment_id — returns True if status is PAID."""
-    try:
-        r = _http.post(
-            ABA_CHECK_URL,
-            json={"api_key": ABA_API_KEY, "merchant_id": ABA_MERCHANT_ID, "payment_id": payment_id},
-            headers={"Content-Type": "application/json", "Accept": "application/json"},
-            timeout=10,
-        )
-        data = r.json()
-        return bool(data.get("ok")) and str(data.get("status", "")).upper() == "PAID"
-    except Exception as e:  # noqa: BLE001
-        print(f"[aba_check_payment] error: {e}")
-    return False
-
-
-def _aba_image_src(card_image_or_qr_image):
-    """khmer-system.com returns the card/QR image as either an http(s) URL, or a
-    base64 string (sometimes with a 'data:image/...;base64,' prefix, sometimes
-    without). Normalize to something an <img src="..."> can use directly."""
-    if not card_image_or_qr_image:
+        _last_bakong_error = f"{type(e).__name__}: {e}"
+        print(f"[bakong_generate_qr] error: {_last_bakong_error}", flush=True)
         return None
-    s = str(card_image_or_qr_image).strip()
-    if s.lower().startswith(("http://", "https://", "data:")):
-        return s
-    return f"data:image/png;base64,{s}"
 
+
+def bakong_check_payment(md5: str) -> bool:
+    """Returns True if Bakong reports the transaction (by MD5) as PAID."""
+    khqr = _get_khqr()
+    if not khqr or not md5:
+        return False
+    try:
+        status = khqr.check_payment(md5)
+        if isinstance(status, tuple):
+            status = status[0]
+        return str(status).upper() == "PAID"
+    except Exception as e:  # noqa: BLE001
+        print(f"[bakong_check_payment] error: {e}", flush=True)
+        return False
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 DATA_DIR = os.environ.get("DATA_DIR", BASE_DIR)  # point this at a Render persistent disk mount in production
@@ -286,7 +291,7 @@ _db_lock = threading.Lock()
 # responses), which already absorbs volumetric/network-layer DDoS traffic.
 # This layer protects against application-layer abuse: someone hammering
 # endpoints that cost real money per call (Khmer TopUp check-user/place-order,
-# ABA PayWay create/check-payment) or that are cheap to spam but expensive
+# Bakong KHQR create/check-payment) or that are cheap to spam but expensive
 # to read (admin-* without a valid token still does a full db_read()).
 #
 # Cloudflare terminates the real client IP into the CF-Connecting-IP header;
@@ -337,7 +342,7 @@ if _HAS_LIMITER:
     # a determined script keeps knocking forever. Anyone who keeps tripping
     # the rate limit gets banned outright for a growing period (10 min → 1
     # hour → 24 hours), checked in before_request so a banned IP is rejected
-    # before touching db_read(), Khmer TopUp, or ABA PayWay — the whole point
+    # before touching db_read(), Khmer TopUp, or Bakong — the whole point
     # is that repeat offenders cost us ~0 CPU/IO per request once banned.
     #
     # Caveat: this state lives in each gunicorn worker's own memory (not
@@ -976,24 +981,17 @@ def create_payment():
 
     trx_id = f"PVH{int(time.time() * 1000)}{secrets.randbelow(1000)}"
 
-    if not ABA_API_KEY or not ABA_MERCHANT_ID:
-        return json_response({"success": False, "error": "ABA_API_KEY / ABA_MERCHANT_ID is not configured on the server"}, 500)
+    if not BAKONG_TOKEN or not BAKONG_ACCOUNT_ID:
+        return json_response({"success": False, "error": "BAKONG_TOKEN / BAKONG_ACCOUNT_ID is not configured on the server"}, 500)
 
-    # ABA PayWay's "username" is just a display label on the payment card —
-    # the in-game player ID doubles fine as one here (no Telegram handle to use).
-    aba_data = aba_generate_qr(amount, str(user_id))
-    if not aba_data:
-        print("aba_generate_qr failed:", _last_aba_error)
-        return json_response({"success": False, "error": "Failed to generate QR"}, 500)
+    bakong_data = bakong_generate_qr(amount, trx_id)
+    if not bakong_data:
+        print("bakong_generate_qr failed:", _last_bakong_error)
+        return json_response({"success": False, "error": "Failed to generate KHQR"}, 500)
 
-    payment_id = aba_data.get("payment_id")
-    if not payment_id:
-        print("aba_generate_qr returned no payment_id:", aba_data)
-        return json_response({"success": False, "error": "Failed to generate QR"}, 500)
-
-    reference = payment_id
-    qr_image = _aba_image_src(aba_data.get("card_image") or aba_data.get("qr_image"))
-    pay_url = aba_data.get("pay_url")
+    reference = bakong_data["md5"]  # Bakong tracks payment by MD5 of the QR payload
+    qr_image = bakong_data["qr_image"]
+    pay_url = None  # pure KHQR — scan with any Bakong bank app
 
     def _mutate(d):
         d["transactions"].append({
@@ -1037,13 +1035,13 @@ def check_payment():
     if order["status"] == "expired":
         return json_response({"paid": False, "expired": True})
 
-    if not ABA_API_KEY or not ABA_MERCHANT_ID:
-        return json_response({"paid": False, "error": "ABA_API_KEY / ABA_MERCHANT_ID is not configured on the server"}, 500)
+    if not BAKONG_TOKEN or not BAKONG_ACCOUNT_ID:
+        return json_response({"paid": False, "error": "BAKONG_TOKEN / BAKONG_ACCOUNT_ID is not configured on the server"}, 500)
 
     try:
-        is_paid = aba_check_payment(order["reference"])
+        is_paid = bakong_check_payment(order["reference"])
     except Exception as e:  # noqa: BLE001
-        print("aba_check_payment request failed:", e)
+        print("bakong_check_payment request failed:", e)
         return json_response({"paid": False, "error": "Server error"}, 500)
 
     if not is_paid:
@@ -1108,7 +1106,7 @@ def check_payment():
 
     zone_part = f" ({order_after['zone_id']})" if order_after.get("zone_id") else ""
     notify_admin(
-        "✅ *PAYMENT CONFIRMED (ABA PayWay)*\n"
+        "✅ *PAYMENT CONFIRMED (Bakong KHQR)*\n"
         "--------------------------\n"
         f"🎮 Game: {order_after['game_code']}\n"
         f"🆔 User ID: {order_after['user_id']}{zone_part}\n"
