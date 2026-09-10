@@ -444,6 +444,181 @@ footer .links a{color:var(--bakong-bright); font-weight:600; font-size:11.5px;}
 /* empty states */
 .empty-products .big-ic{font-size:28px; margin-bottom:6px; opacity:.7; display:block;}
 
+
+/* —— commercial polish (like modern top-up sites) —— */
+.trust-row{
+  display:flex; gap:6px; padding:0 14px 10px; overflow-x:auto;
+  -webkit-overflow-scrolling:touch;
+}
+.trust-chip{
+  flex:0 0 auto; display:inline-flex; align-items:center; gap:5px;
+  padding:6px 11px; border-radius:999px; font-size:11px; font-weight:700;
+  background:var(--card); border:.5px solid var(--line); color:var(--ink-soft);
+  white-space:nowrap;
+}
+.trust-chip.ok{color:#4ade80; border-color:rgba(34,197,94,.25); background:rgba(34,197,94,.08);}
+.trust-chip.pay{color:var(--bakong-bright); border-color:rgba(139,92,246,.25); background:var(--acc-soft);}
+.trust-chip.fast{color:#fbbf24; border-color:rgba(251,191,36,.25); background:rgba(251,191,36,.08);}
+
+.games-wrap{
+  margin:0 14px 20px; padding:12px 10px 14px;
+  background:var(--card); border:.5px solid var(--line); border-radius:18px;
+  box-shadow:var(--shadow);
+}
+.games-wrap .game-grid{padding:0; margin:0;}
+.section-in-wrap{padding:0 4px 10px; margin:0;}
+.section-in-wrap h2{margin:0; font-size:11px; letter-spacing:.06em;}
+
+.pop-ticker{
+  display:flex; align-items:center; gap:8px; padding:0 14px 8px;
+  font-size:12px; color:var(--muted); font-weight:650;
+}
+.pop-ticker .flame{font-size:13px;}
+.pop-ticker .name{color:#e2e8f0; font-weight:750;}
+.pop-ticker .dot{width:4px; height:4px; border-radius:50%; background:var(--acc);}
+
+.steps-row{
+  display:flex; gap:6px; padding:0 14px 12px;
+}
+.step-pill{
+  flex:1; display:flex; align-items:center; gap:6px;
+  padding:8px 10px; border-radius:10px; background:var(--card);
+  border:.5px solid var(--line); font-size:11px; font-weight:700; color:var(--muted);
+}
+.step-pill .n{
+  width:18px; height:18px; border-radius:50%; flex:none;
+  background:var(--acc-soft); color:var(--bakong-bright);
+  display:grid; place-items:center; font-size:10px; font-weight:800;
+}
+.step-pill.on{border-color:rgba(139,92,246,.35); color:#e2e8f0;}
+.step-pill.on .n{background:var(--acc); color:#fff;}
+
+.detail-trust{display:flex; gap:6px; padding:0 14px 10px; flex-wrap:wrap;}
+.detail-trust .trust-chip{font-size:10.5px; padding:5px 9px;}
+
+.pkg-section-label{
+  grid-column:1/-1; font-size:11px; font-weight:700; letter-spacing:.05em;
+  text-transform:uppercase; color:var(--muted); padding:4px 2px 2px;
+  display:flex; align-items:center; gap:6px;
+}
+.pkg-section-label::after{content:""; flex:1; height:1px; background:var(--line);}
+
+/* FAB Telegram */
+.fab-tg{
+  position:fixed; right:14px; bottom:calc(var(--tab-h) + 18px + env(safe-area-inset-bottom));
+  z-index:70; width:52px; height:52px; border-radius:50%;
+  background:linear-gradient(145deg, #2AABEE, #229ED9);
+  box-shadow:0 6px 20px rgba(42,171,238,.45);
+  display:flex; align-items:center; justify-content:center;
+  color:#fff; border:0; cursor:pointer;
+  transition:transform .15s ease;
+}
+.fab-tg:active{transform:scale(.94);}
+.fab-tg svg{width:26px; height:26px;}
+@media (min-width:720px){
+  .fab-tg{bottom:28px;}
+}
+body.view-game .fab-tg{bottom:calc(var(--tab-h) + 78px + env(safe-area-inset-bottom));}
+@media (min-width:720px){
+  body.view-game .fab-tg{bottom:90px;}
+}
+
+/* product card polish */
+.product-card .pmedia{
+  width:52px; height:52px; margin:4px auto 8px;
+  border-radius:14px; background:linear-gradient(145deg, var(--acc-soft), rgba(236,72,153,.12));
+}
+.product-card .pprice{letter-spacing:-.02em;}
+
+/* search focus glow */
+.home-search:focus-within{
+  border-color:rgba(139,92,246,.45);
+  box-shadow:0 0 0 3px var(--bakong-glow);
+}
+
+/* subtle page fade */
+#main{animation:pageIn .28s ease both;}
+@keyframes pageIn{from{opacity:0; transform:translateY(6px);} to{opacity:1; transform:none;}}
+
+/* safe area top */
+.topbar{padding-top:max(10px, env(safe-area-inset-top));}
+
+
+/* language switch — Sazz-style pill */
+.lang-switcher{
+  position:relative; display:inline-grid; grid-template-columns:1fr 1fr;
+  align-items:center; width:88px; height:34px; padding:3px;
+  background:rgba(255,255,255,.07); border:1px solid rgba(255,255,255,.1);
+  border-radius:999px; flex:none;
+}
+.lang-slider{
+  position:absolute; top:3px; left:3px;
+  width:calc(50% - 3px); height:calc(100% - 6px);
+  background:linear-gradient(135deg, var(--acc), var(--acc-600));
+  border-radius:999px; box-shadow:0 2px 8px rgba(124,58,237,.4);
+  transition:transform .28s cubic-bezier(.34,1.5,.5,1); z-index:0;
+}
+.lang-switcher.km .lang-slider{transform:translateX(calc(100% + 3px));}
+.lang-opt{
+  position:relative; z-index:1; appearance:none; border:0; background:transparent;
+  cursor:pointer; height:28px; border-radius:999px;
+  display:inline-flex; align-items:center; justify-content:center;
+  color:rgba(255,255,255,.5); font-size:11px; font-weight:800; font-family:var(--fd);
+  transition:color .2s;
+}
+.lang-opt.on{color:#fff;}
+.lang-opt:not(.on):hover{color:rgba(255,255,255,.85);}
+.auth-backdrop{
+  position:fixed; inset:0; z-index:120; background:rgba(0,0,0,.72);
+  display:flex; align-items:center; justify-content:center; padding:16px;
+}
+.auth-card{
+  width:100%; max-width:360px; background:var(--card);
+  border:.5px solid var(--line); border-radius:20px; padding:22px 18px 18px;
+  box-shadow:var(--shadow-lg); position:relative;
+}
+.auth-card h3{margin:0 0 4px; font-size:20px; font-weight:800; color:#fff; text-align:center;}
+.auth-card .auth-sub{text-align:center; color:var(--muted); font-size:12.5px; margin:0 0 16px; font-weight:600;}
+.auth-tabs{display:grid; grid-template-columns:1fr 1fr; gap:4px; background:var(--bg);
+  border-radius:12px; padding:4px; margin-bottom:16px;}
+.auth-tabs button{
+  border:0; background:transparent; color:var(--muted); font-weight:700; font-size:13px;
+  padding:10px; border-radius:9px; font-family:var(--fd); cursor:pointer;
+}
+.auth-tabs button.on{background:var(--acc); color:#fff; box-shadow:0 2px 10px var(--bakong-glow);}
+.auth-field{margin-bottom:12px;}
+.auth-field label{display:block; font-size:11px; font-weight:700; color:var(--muted);
+  text-transform:uppercase; letter-spacing:.04em; margin-bottom:6px;}
+.auth-field input{
+  width:100%; background:var(--bg); border:.5px solid var(--line-strong); color:#fff;
+  padding:13px 14px; border-radius:12px; font-size:15px; font-family:var(--fd); min-height:46px;
+}
+.auth-field input:focus{outline:none; border-color:var(--acc); box-shadow:0 0 0 3px var(--bakong-glow);}
+.auth-field input::placeholder{color:rgba(139,147,167,.55);}
+.auth-submit{
+  width:100%; margin-top:6px; padding:14px; min-height:48px; border:0; border-radius:12px;
+  background:linear-gradient(135deg, var(--acc), #ec4899); color:#fff;
+  font-weight:750; font-size:15px; font-family:var(--fd); cursor:pointer;
+  box-shadow:0 4px 16px var(--bakong-glow);
+}
+.auth-submit:active{transform:scale(.98);}
+.auth-note{text-align:center; font-size:11.5px; color:var(--muted); margin-top:12px; line-height:1.45;}
+.auth-close{
+  position:absolute; top:12px; right:12px; width:36px; height:36px; border-radius:10px;
+  background:var(--bg2); border:.5px solid var(--line); color:var(--muted);
+  display:grid; place-items:center; cursor:pointer; font-size:16px;
+}
+.auth-guest{
+  width:100%; margin-top:10px; padding:12px; border-radius:12px; border:.5px solid var(--line);
+  background:var(--bg2); color:var(--ink-soft); font-weight:700; font-size:13px; font-family:var(--fd); cursor:pointer;
+}
+.topbar .avatar-btn{
+  width:34px; height:34px; border-radius:10px; border:.5px solid var(--line);
+  background:var(--acc-soft); color:var(--bakong-bright);
+  display:flex; align-items:center; justify-content:center; cursor:pointer; flex:none;
+}
+.topbar .avatar-btn svg{width:16px; height:16px;}
+
 .toast{position:fixed; bottom:calc(var(--tab-h) + 20px); left:50%; transform:translateX(-50%) translateY(10px);
   background:var(--card-2); color:#fff; border:.5px solid var(--line);
   padding:11px 16px; border-radius:12px; font-size:13px; font-weight:650; opacity:0; transition:all .25s; z-index:200; max-width:90vw;
@@ -499,10 +674,111 @@ let state = {
   idCheck: null,       // null | "checking" | {ok:true,name} | {ok:false}
   heroIndex: 0,
   gameSearch: "",
+  lang: (function(){ try { return localStorage.getItem("pvh_lang") || "km"; } catch(e){ return "km"; } })(),
+  authTab: "login",
+  user: (function(){ try { return JSON.parse(localStorage.getItem("pvh_user") || "null"); } catch(e){ return null; } })(),
 };
+
+// ---- i18n (EN / KM) + auth UI (appearance only) ----
+const I18N = {
+  km: {
+    games: "ហ្គេម", track: "តាមដាន", orders: "Orders", help: "Help",
+    searchPh: "ស្វែងរកហ្គេម ឬ #id...", popular: "POPULAR",
+    trustFast: "⚡ Auto top-up", trustPay: "⬡ Bakong KHQR", trustOk: "✓ សុវត្ថិភាព",
+    buyNow: "ទិញឥឡូវ", total: "សរុប", choosePkg: "ជ្រើសរើស Package",
+    stepId: "ID", stepPkg: "Package", stepPay: "បង់",
+    chipFast: "⚡ លឿន", chipPay: "⬡ KHQR", chipAuto: "✓ ស្វ័យប្រវត្តិ",
+    myOrders: "ការបញ្ជាទិញ", ordersSub: "វាយ Player ID ដើម្បីមើលប្រវត្តិ និង track",
+    search: "ស្វែងរក", close: "បិទ", login: "ចូល", signup: "ចុះឈ្មោះ",
+    loginTitle: "សូមស្វាគមន៍", loginSub: "ចូលគណនី ឬបន្តជាភ្ញៀវ",
+    email: "អ៊ីមែល / ទូរស័ព្ទ", password: "ពាក្យសម្ងាត់", name: "ឈ្មោះ",
+    submitLogin: "ចូល", submitSignup: "បង្កើតគណនី", guest: "បន្តជាភ្ញៀវ",
+    authNote: "រូបរាងស្អាត — មិនទាន់ភ្ជាប់ login ពិតប្រាកដ",
+    loggedAs: "បានចូល", logout: "ចាកចេញ", rec: "ពេញនិយម", allPkg: "ទាំងអស់",
+  },
+  en: {
+    games: "Games", track: "Track", orders: "Orders", help: "Help",
+    searchPh: "Search games or #id...", popular: "POPULAR",
+    trustFast: "⚡ Auto top-up", trustPay: "⬡ Bakong KHQR", trustOk: "✓ Secure",
+    buyNow: "Buy now", total: "Total", choosePkg: "Choose package",
+    stepId: "ID", stepPkg: "Package", stepPay: "Pay",
+    chipFast: "⚡ Fast", chipPay: "⬡ KHQR", chipAuto: "✓ Auto",
+    myOrders: "My orders", ordersSub: "Enter Player ID to view history & track",
+    search: "Search", close: "Close", login: "Log in", signup: "Sign up",
+    loginTitle: "Welcome", loginSub: "Sign in or continue as guest",
+    email: "Email / Phone", password: "Password", name: "Name",
+    submitLogin: "Log in", submitSignup: "Create account", guest: "Continue as guest",
+    authNote: "UI only — real auth not connected yet",
+    loggedAs: "Signed in", logout: "Log out", rec: "Popular", allPkg: "All",
+  }
+};
+function t(key){
+  const lang = state.lang || "km";
+  return (I18N[lang] && I18N[lang][key]) || (I18N.km && I18N.km[key]) || key;
+}
+function setLang(lang){
+  state.lang = lang === "en" ? "en" : "km";
+  try { localStorage.setItem("pvh_lang", state.lang); } catch(e){}
+  render();
+}
+function openAuth(tab){
+  state.authTab = tab === "signup" ? "signup" : "login";
+  showAuthModal();
+}
+function showAuthModal(){
+  const existing = document.getElementById("authModal");
+  if(existing) existing.remove();
+  const isSignup = state.authTab === "signup";
+  const root = document.createElement("div");
+  root.className = "auth-backdrop";
+  root.id = "authModal";
+  root.innerHTML = `
+    <div class="auth-card">
+      <button type="button" class="auth-close" id="authCloseBtn">✕</button>
+      <h3>${t("loginTitle")}</h3>
+      <p class="auth-sub">${t("loginSub")}</p>
+      <div class="auth-tabs">
+        <button type="button" class="${!isSignup ? "on" : ""}" data-tab="login">${t("login")}</button>
+        <button type="button" class="${isSignup ? "on" : ""}" data-tab="signup">${t("signup")}</button>
+      </div>
+      ${isSignup ? `<div class="auth-field"><label>${t("name")}</label><input type="text" id="authName" placeholder="Name" autocomplete="name"></div>` : ""}
+      <div class="auth-field"><label>${t("email")}</label><input type="text" id="authEmail" placeholder="email@example.com" autocomplete="username"></div>
+      <div class="auth-field"><label>${t("password")}</label><input type="password" id="authPass" placeholder="••••••••" autocomplete="${isSignup ? "new-password" : "current-password"}"></div>
+      <button type="button" class="auth-submit" id="authSubmit">${isSignup ? t("submitSignup") : t("submitLogin")}</button>
+      <button type="button" class="auth-guest" id="authGuest">${t("guest")}</button>
+      <p class="auth-note">${t("authNote")}</p>
+    </div>`;
+  document.body.appendChild(root);
+  root.querySelectorAll(".auth-tabs button").forEach(btn => {
+    btn.onclick = () => { state.authTab = btn.dataset.tab; showAuthModal(); };
+  });
+  document.getElementById("authCloseBtn").onclick = () => root.remove();
+  root.onclick = (e) => { if(e.target === root) root.remove(); };
+  document.getElementById("authGuest").onclick = () => { root.remove(); toast(t("guest")); };
+  document.getElementById("authSubmit").onclick = () => {
+    const email = (document.getElementById("authEmail") && document.getElementById("authEmail").value.trim()) || "";
+    if(!email){ toast(t("email"), true); return; }
+    const nm = (document.getElementById("authName") && document.getElementById("authName").value.trim()) || email.split("@")[0] || "User";
+    state.user = { name: nm, email };
+    try { localStorage.setItem("pvh_user", JSON.stringify(state.user)); } catch(e){}
+    root.remove();
+    toast(t("loggedAs") + ": " + state.user.name);
+    render();
+  };
+}
+function logout(){
+  state.user = null;
+  try { localStorage.removeItem("pvh_user"); } catch(e){}
+  toast(t("logout"));
+  render();
+}
+
+
 
 // ---- icon set (inline SVG, stroke-based — no emoji) ----
 const ICONS = {
+  server: `<span class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="4" width="18" height="6" rx="1.5"/><rect x="3" y="14" width="18" height="6" rx="1.5"/><path d="M7 7h.01M7 17h.01"/></svg></span>`,
+
   search: `<span class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg></span>`,
   games: `<span class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="2" y="6" width="20" height="12" rx="2"/><path d="M6 12h.01M10 12h.01M15 10l2 2-2 2M8 9v6"/></svg></span>`,
   track: `<span class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4-4"/></svg></span>`,
@@ -685,6 +961,12 @@ function renderIdStatus(){
   }
   else { el.textContent = ""; el.className = "id-status"; }
   updateBuyBarState();
+
+  const needsZone = !!(state.activeGame && state.activeGame.has_server_id);
+  const hasId = !!(state.playerId && (!needsZone || state.zoneId));
+  document.querySelectorAll(".steps-row .step-pill").forEach((el, i) => {
+    if(i === 0) el.classList.toggle("on", hasId);
+  });
 }
 
 // ---- product selection ----
@@ -705,18 +987,18 @@ function openMyOrders(){
   const prefill = lastUsedPlayerIdAnyGame();
   root.innerHTML = `
     <div class="sheet">
-      <h3>ការបញ្ជាទិញ</h3>
-      <div class="sub">វាយ Player ID ដើម្បីមើលប្រវត្តិ និង track ការដឹកជញ្ជូន</div>
+      <h3>${t("myOrders")}</h3>
+      <div class="sub">${t("ordersSub")}</div>
       <div class="id-row">
         <div class="id-field">
           <span class="field-icon">${ICONS.user}</span>
           <input type="text" inputmode="numeric" id="ordersSearchInput" placeholder="Player ID" value="${esc(prefill ? prefill.playerId : "")}"
             onkeydown="if(event.key==='Enter')__app.searchMyOrders()">
         </div>
-        <button class="btn-primary" onclick="__app.searchMyOrders()">ស្វែងរក</button>
+        <button class="btn-primary" onclick="__app.searchMyOrders()">${t("search")}</button>
       </div>
       <div id="ordersResult"></div>
-      <button class="close-btn" onclick="__app.closeMyOrders()">បិទ</button>
+      <button class="close-btn" onclick="__app.closeMyOrders()">${t("close")}</button>
     </div>`;
   document.body.appendChild(root);
   if(prefill) searchMyOrders();
@@ -761,6 +1043,11 @@ function selectProduct(id){
   updateBuyBarState();
   const bar = document.querySelector(".buy-bar");
   if(bar) bar.scrollIntoView({ behavior: "smooth", block: "nearest" });
+
+  // refresh step pills without full re-render
+  document.querySelectorAll(".steps-row .step-pill").forEach((el, i) => {
+    if(i === 1) el.classList.toggle("on", !!state.selectedProduct);
+  });
 }
 function updateBuyBarState(){
   const btn = $("#buyBtn");
@@ -794,7 +1081,7 @@ async function buyNow(){
   const userId = state.playerId;
 
   const btn = $("#buyBtn");
-  if(btn){ btn.disabled = true; btn.textContent = "កំពុងបង្កើត QR..."; }
+  if(btn){ btn.disabled = true; btn.textContent = state.lang==="en" ? "Creating QR..." : "កំពុងបង្កើត QR..."; }
 
   const r = await api("create-payment", {
     method:"POST",
@@ -803,7 +1090,7 @@ async function buyNow(){
 
   if(!r.success){
     toast(r.error || "បង្កើត QR មិនជោគជ័យ", true);
-    if(btn){ btn.disabled = false; btn.textContent = "ទិញឥឡូវ"; }
+    if(btn){ btn.disabled = false; btn.textContent = t("buyNow"); }
     return;
   }
   openPaymentSheet(r.trx_id, r.qr_image, r.pay_url, amount);
@@ -1031,7 +1318,7 @@ function closePaymentSheet(trxId, userClosed){
   const el = $("#paySheet");
   if(el) el.remove();
   const btn = $("#buyBtn");
-  if(btn){ btn.disabled = false; btn.textContent = "ទិញឥឡូវ"; }
+  if(btn){ btn.disabled = false; btn.textContent = t("buyNow"); }
   if(userClosed && trxId) api("expire-payment", {method:"POST", body:{trx_id: trxId}}).catch(()=>{});
 }
 
@@ -1079,12 +1366,19 @@ function renderTopbarAndFooter(){
   const s = state.settings || {};
   const tb = $("#topbar");
   if(tb){
+    const isKm = state.lang !== "en";
     tb.innerHTML = `
       ${s.LOGO_URL ? `<img class="logo" src="${esc(s.LOGO_URL)}" alt="logo">` : ""}
       <div class="sitename">${esc(s.SITE_NAME || "PVH TOPUP")}</div>
       <div class="spacer"></div>
-      <button class="contact-btn" onclick="__app.openMyOrders()" aria-label="Orders">${ICONS.history}<span class="btn-label">Orders</span></button>
-      ${s.ADMIN_TELEGRAM_LINK ? `<a class="contact-btn" href="${esc(s.ADMIN_TELEGRAM_LINK)}" target="_blank" aria-label="Help">${ICONS.chat}<span class="btn-label">Help</span></a>` : ""}
+      <div class="lang-switcher ${isKm ? "km" : ""}" role="group" aria-label="Language">
+        <span class="lang-slider"></span>
+        <button type="button" class="lang-opt ${!isKm ? "on" : ""}" onclick="__app.setLang('en')">EN</button>
+        <button type="button" class="lang-opt ${isKm ? "on" : ""}" onclick="__app.setLang('km')">ខ្មែរ</button>
+      </div>
+      <button type="button" class="avatar-btn" onclick="${state.user ? "__app.logout()" : "__app.openAuth('login')"}" aria-label="${state.user ? t("logout") : t("login")}" title="${state.user ? esc(state.user.name) : t("login")}">
+        ${state.user ? `<span style="font-size:12px;font-weight:800">${esc((state.user.name||"U").slice(0,1).toUpperCase())}</span>` : ICONS.userTab}
+      </button>
     `;
   }
   const ft = $("#footer");
@@ -1153,25 +1447,40 @@ function renderHome(){
   const games = q
     ? state.games.filter(g => (g.name||"").toLowerCase().includes(q) || (g.code||"").toLowerCase().includes(q))
     : state.games;
+  const highlight = (state.games[0] && state.games[0].name) || "Free Fire";
   return `
     ${renderHeroAndPromo()}
     <div class="home-search">
       <span class="ic">${ICONS.search || ICONS.user}</span>
-      <input type="search" placeholder="ស្វែងរកហ្គេម..." value="${esc(state.gameSearch||"")}"
+      <input type="search" placeholder="${t("searchPh")}" value="${esc(state.gameSearch||"")}"
         oninput="__app.onGameSearch(this.value)" enterkeyhint="search">
     </div>
-    <div class="section"><h2>POPULAR</h2></div>
-    <div class="game-grid">
-      ${games.length ? games.map((g,i) => `
-        <div class="game-card facet" onclick="__app.openGame(${g.id})">
-          <div class="media">
-            ${g.image_url ? `<img src="${esc(g.image_url)}" alt="" loading="lazy">` : ""}
-            ${i < 1 ? `<div class="gem-badge">🔥 POPULAR</div>` : (isTelegramGame(g) ? `<div class="gem-badge">${ICONS.star}</div>` : "")}
-          </div>
-          <div class="info">
-            <div class="gname">${esc(g.name)}</div>
-          </div>
-        </div>`).join("") : (state.games.length ? `<div class="empty-products" style="grid-column:1/-1"><span class="big-ic">🔍</span>រកមិនឃើញហ្គេម</div>` : `<div class="skeleton" style="height:100px;border-radius:16px;"></div><div class="skeleton" style="height:100px;border-radius:16px;"></div><div class="skeleton" style="height:100px;border-radius:16px;"></div>`)}
+    <div class="trust-row">
+      <span class="trust-chip fast">${t("trustFast")}</span>
+      <span class="trust-chip pay">${t("trustPay")}</span>
+      <span class="trust-chip ok">${t("trustOk")}</span>
+    </div>
+    <div class="pop-ticker">
+      <span class="flame">🔥</span>
+      <span>${t("popular")}</span>
+      <span class="dot"></span>
+      <span class="name">${esc(highlight)}</span>
+    </div>
+    <div class="games-wrap">
+      <div class="game-grid">
+        ${games.length ? games.map((g,i) => `
+          <div class="game-card" onclick="__app.openGame(${g.id})">
+            <div class="media">
+              ${g.image_url ? `<img src="${esc(g.image_url)}" alt="" loading="lazy">` : ""}
+              ${i < 1 ? `<div class="gem-badge">🔥 ${t("popular")}</div>` : (isTelegramGame(g) ? `<div class="gem-badge">${ICONS.star}</div>` : "")}
+            </div>
+            <div class="info">
+              <div class="gname">${esc(g.name)}</div>
+            </div>
+          </div>`).join("") : (state.games.length
+            ? `<div class="empty-products" style="grid-column:1/-1"><span class="big-ic">🔍</span>—</div>`
+            : `<div class="skeleton" style="height:100px;border-radius:16px;"></div><div class="skeleton" style="height:100px;border-radius:16px;"></div><div class="skeleton" style="height:100px;border-radius:16px;"></div>`)}
+      </div>
     </div>
   `;
 }
@@ -1179,32 +1488,29 @@ function renderHome(){
 function renderGame(){
   const g = state.activeGame;
   const needsZone = !!g.has_server_id;
-  const productsHtml = state.productsLoading
-    ? `<div class="skeleton" style="height:140px;border-radius:12px;"></div><div class="skeleton" style="height:140px;border-radius:12px;"></div><div class="skeleton" style="height:140px;border-radius:12px;"></div><div class="skeleton" style="height:140px;border-radius:12px;"></div>`
-    : (state.products.length ? state.products.map(p => `
-    <div class="product-card facet ${state.selectedProduct && state.selectedProduct.id===p.id ? 'selected':''}" data-pid="${p.id}" onclick="__app.selectProduct(${p.id})">
+  const rec = state.products.filter(p => p.section === "recommend");
+  const rest = state.products.filter(p => p.section !== "recommend");
+  const card = (p) => `
+    <div class="product-card ${state.selectedProduct && state.selectedProduct.id===p.id ? 'selected':''}" data-pid="${p.id}" onclick="__app.selectProduct(${p.id})">
       ${p.section==='recommend' ? `<span class="badge">${ICONS.star} ពេញនិយម</span>` : ""}
       <div class="pmedia">
         ${p.image_url ? `<img src="${esc(p.image_url)}" alt="" loading="lazy">` : `<span class="fallback">${ICONS.diamond}</span>`}
       </div>
       <div class="pname">${esc(p.name)}</div>
       <div class="pstub"><div class="pprice">$${Number(p.price).toFixed(2)}</div></div>
-    </div>`).join("") : `<div class="empty-products"><span class="big-ic">📦</span>មិនទាន់មាន package សម្រាប់ហ្គេមនេះទេ<br><span style="font-size:12px;opacity:.8">សូមទាក់ទង admin</span></div>`);
-
-  const recent = getRecentIds(g.code).filter(e => e.playerId !== state.playerId);
-  const chipsHtml = recent.length ? `
-    <div class="recent-ids">
-      ${recent.map(e => `<button class="id-chip" onclick="__app.useRecentId('${esc(e.playerId)}','${esc(e.zoneId)}','${esc(e.name)}')">${ICONS.user} ${esc(e.name || e.playerId)}</button>`).join("")}
-    </div>` : "";
-
-  const isGiftcard = g.fulfillment_type === "giftcard";
-  const isTelegram = isTelegramGame(g);
-  const idLabel = isTelegram ? "Telegram Username" : "Player ID";
-  const idPlaceholder = isTelegram ? "បញ្ចូល Username (ឧ. @yourname)" : "បញ្ចូល Player ID";
-  const telegramNote = g.fulfillment_type === "telegram_stars"
-    ? (ICONS.star + " Stars នឹងផ្ញើទៅគណនី Telegram របស់អ្នកដោយផ្ទាល់ — សូមប្រាកដថា Username ត្រឹមត្រូវ")
-    : (ICONS.star + " Telegram Premium នឹងផ្ញើទៅគណនីរបស់អ្នកដោយផ្ទាល់ — សូមប្រាកដថា Username ត្រឹមត្រូវ");
-
+    </div>`;
+  const productsHtml = state.productsLoading
+    ? `<div class="skeleton" style="height:120px;border-radius:12px;"></div><div class="skeleton" style="height:120px;border-radius:12px;"></div><div class="skeleton" style="height:120px;border-radius:12px;"></div>`
+    : (state.products.length
+      ? `${rec.length ? `<div class="pkg-section-label">${t("rec")}</div>${rec.map(card).join("")}` : ""}
+         ${rest.length ? `<div class="pkg-section-label">${rec.length ? t("allPkg") : "Package"}</div>${rest.map(card).join("")}` : (rec.length ? "" : state.products.map(card).join(""))}`
+      : `<div class="empty-products"><span class="big-ic">📦</span>មិនទាន់មាន package សម្រាប់ហ្គេមនេះទេ<br><span style="font-size:12px;opacity:.8">សូមទាក់ទង admin</span></div>`);
+  const recent = getRecentIds(g.code);
+  const idLabel = isTelegramGame(g) ? "Telegram Username" : "Player ID";
+  const idPh = isTelegramGame(g) ? "@username" : "វាយ ID នៅទីនេះ";
+  const idMode = isTelegramGame(g) ? "text" : "numeric";
+  const hasId = !!(state.playerId && (!needsZone || state.zoneId));
+  const hasPkg = !!state.selectedProduct;
   return `
     <div class="detail-header">
       <div class="back-btn" onclick="__app.goHome()">${ICONS.chevronLeft}</div>
@@ -1214,37 +1520,46 @@ function renderGame(){
         <div class="gsub">${g.fulfillment_type === "giftcard" ? "Gift Card" : (isTelegramGame(g) ? "Telegram" : "Top-up · KHQR")}</div>
       </div>
     </div>
-    ${isGiftcard ? `
+    <div class="detail-trust">
+      <span class="trust-chip fast">${t("chipFast")}</span>
+      <span class="trust-chip pay">${t("chipPay")}</span>
+      <span class="trust-chip ok">${t("chipAuto")}</span>
+    </div>
+    <div class="steps-row">
+      <div class="step-pill ${hasId ? "on":""}"><span class="n">1</span> ${t("stepId")}</div>
+      <div class="step-pill ${hasPkg ? "on":""}"><span class="n">2</span> ${t("stepPkg")}</div>
+      <div class="step-pill"><span class="n">3</span> ${t("stepPay")}</div>
+    </div>
     <div class="id-form">
-      <div class="giftcard-note">${ICONS.image} ទិញរួច នឹងទទួល Gift Card Code ភ្លាមៗ — ត្រូវ redeem ដោយខ្លួនឯងលើ roblox.com</div>
-    </div>` : `
-    <div class="id-form">
-      ${isTelegram ? '<div class="giftcard-note">' + telegramNote + '</div>' : ""}
-      <label>${idLabel}</label>
+      <label>${esc(idLabel)}</label>
       <div class="id-row">
         <div class="id-field">
           <span class="field-icon">${ICONS.user}</span>
-          <input type="text" inputmode="${isTelegram ? 'text' : 'numeric'}" placeholder="${idPlaceholder}" value="${esc(state.playerId)}"
+          <input type="text" inputmode="${idMode}" autocomplete="off" autocapitalize="off"
+            placeholder="${esc(idPh)}" value="${esc(state.playerId||"")}"
             oninput="__app.onIdInput('playerId', this.value)" onfocus="__app.onFieldFocus(this)">
         </div>
-        ${needsZone ? `<div class="id-field zone-field">
-          <span class="field-icon">${ICONS.zone}</span>
-          <input type="text" inputmode="numeric" placeholder="Zone ID" value="${esc(state.zoneId)}"
+        ${needsZone ? `
+        <div class="id-field zone-field">
+          <span class="field-icon">${ICONS.server}</span>
+          <input type="text" inputmode="numeric" placeholder="Zone" value="${esc(state.zoneId||"")}"
             oninput="__app.onIdInput('zoneId', this.value)" onfocus="__app.onFieldFocus(this)">
         </div>` : ""}
       </div>
       <div class="id-status" id="idStatus"></div>
-      ${chipsHtml}
-    </div>`}
-    <div class="section"><h2>ជ្រើសរើស Package</h2></div>
+      ${recent.length ? `<div class="recent-ids">${recent.map(r =>
+        `<button type="button" class="id-chip" onclick="__app.useRecentId('${esc(r.playerId)}','${esc(r.zoneId||"")}','${esc(r.name||"")}')">${ICONS.user} ${esc(r.playerId)}${r.zoneId ? " · "+esc(r.zoneId) : ""}${r.name ? " · "+esc(r.name) : ""}</button>`
+      ).join("")}</div>` : ""}
+    </div>
+    <div class="section" style="padding-bottom:4px"><h2>${t("choosePkg")}</h2></div>
     <div class="product-grid">${productsHtml}</div>
-    <div class="buy-bar">
+    <div class="buy-bar" id="buyBar">
       <div class="total">
-        <div class="l">សរុប</div>
-        <div class="v">$${state.selectedProduct ? Number(state.selectedProduct.price).toFixed(2) : "0.00"}</div>
+        <div class="l">${t("total")}</div>
+        <div class="v" id="buyTotal">$0.00</div>
       </div>
       <div class="buy-actions">
-        <button class="btn-primary" id="buyBtn" disabled onclick="__app.buyNow()">ទិញឥឡូវ</button>
+        <button class="btn-primary" id="buyBtn" disabled onclick="__app.buyNow()">${t("buyNow")}</button>
         <div class="buy-hint" id="buyHint"></div>
       </div>
     </div>
@@ -1254,16 +1569,19 @@ function renderGame(){
 function render(){
   const app = $("#app");
   const tabHome = state.view === "home" ? "on" : "";
+  document.body.classList.toggle("view-game", state.view === "game");
+  const tg = (state.settings && state.settings.ADMIN_TELEGRAM_LINK) || "";
   app.innerHTML = `
     <div class="topbar" id="topbar"></div>
     <div id="main">${state.view === "home" ? renderHome() : renderGame()}</div>
     <footer id="footer"></footer>
     <nav class="tabbar" id="tabbar">
-      <button type="button" class="${tabHome}" onclick="__app.goHome()">${ICONS.games}<span>Games</span></button>
-      <button type="button" onclick="__app.openMyOrders()">${ICONS.track}<span>Track</span></button>
-      <button type="button" onclick="__app.openMyOrders()">${ICONS.history}<span>Orders</span></button>
-      <a href="${esc((state.settings&&state.settings.ADMIN_TELEGRAM_LINK)||'#')}" target="_blank" rel="noopener">${ICONS.userTab}<span>Help</span></a>
+      <button type="button" class="${tabHome}" onclick="__app.goHome()">${ICONS.games}<span>${t("games")}</span></button>
+      <button type="button" onclick="__app.openMyOrders()">${ICONS.track}<span>${t("track")}</span></button>
+      <button type="button" onclick="__app.openMyOrders()">${ICONS.history}<span>${t("orders")}</span></button>
+      <button type="button" onclick="__app.openAuth('login')">${ICONS.userTab}<span>${state.user ? esc(state.user.name.slice(0,8)) : t("login")}</span></button>
     </nav>
+    ${tg ? `<a class="fab-tg" href="${esc(tg)}" target="_blank" rel="noopener" aria-label="Telegram">${ICONS.telegram}</a>` : ""}
   `;
   renderTopbarAndFooter();
   if(state.view === "game"){ renderIdStatus(); updateBuyBarState(); }
@@ -1272,7 +1590,7 @@ function render(){
 
 // expose the handful of functions used by inline onclick/oninput in rendered HTML
 window.__app = { openGame: (id)=>{ const g = state.games.find(x=>x.id===id); if(g) openGame(g); },
-  goHome, selectProduct, onIdInput, onFieldFocus, onGameSearch, buyNow, useRecentId, openMyOrders, closeMyOrders, searchMyOrders };
+  goHome, selectProduct, onIdInput, onFieldFocus, onGameSearch, buyNow, useRecentId, openMyOrders, closeMyOrders, searchMyOrders, setLang, openAuth, logout };
 
 // ---- boot ----
 render();
